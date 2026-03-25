@@ -59,7 +59,19 @@ const Header = () => {
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg py-1">
+                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg py-1 z-50">
+                    {user?.role === 'admin' && (
+                      <>
+                        <Link
+                          to="/admin"
+                          className="flex items-center space-x-2 px-4 py-2 text-sm hover:bg-accent transition-colors bg-red-500/5"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <span className="text-red-600 font-medium">⚡ Admin Panel</span>
+                        </Link>
+                        <div className="border-t border-border my-1"></div>
+                      </>
+                    )}
                     <Link
                       to="/account"
                       className="flex items-center space-x-2 px-4 py-2 text-sm hover:bg-accent transition-colors"

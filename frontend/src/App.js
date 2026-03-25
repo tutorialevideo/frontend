@@ -13,6 +13,7 @@ import RegisterPage from './pages/RegisterPage';
 import AccountPage from './pages/AccountPage';
 import FavoritesPage from './pages/FavoritesPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import AdminPage from './pages/AdminPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/account/favorites" element={<FavoritesPage />} />
                 <Route path="/account/subscription" element={<SubscriptionPage />} />
+                <Route path="/admin" element={<AdminPage />} />
               </Routes>
             </main>
             <Footer />
