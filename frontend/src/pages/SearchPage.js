@@ -4,21 +4,24 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Building2, TrendingUp, ChevronRight, X } from 'lucide-react';
 import api from '../services/api';
 
-const SearchPage = () => {
+const SearchPage = ({ initialFilters = {} }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [query, setQuery] = useState(initialFilters.q || searchParams.get('q') || '');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   
   // Filters
-  const [selectedJudet, setSelectedJudet] = useState(searchParams.get('judet') || '');
-  const [selectedLocalitate, setSelectedLocalitate] = useState(searchParams.get('localitate') || '');
-  const [selectedCaen, setSelectedCaen] = useState(searchParams.get('caen') || '');
+  const [selectedJudet, setSelectedJudet] = useState(initialFilters.judet || searchParams.get('judet') || '');
+  const [selectedLocalitate, setSelectedLocalitate] = useState(initialFilters.localitate || searchParams.get('localitate') || '');
+  const [selectedCaen, setSelectedCaen] = useState(initialFilters.caen || searchParams.get('caen') || '');
   const [judete, setJudete] = useState([]);
   const [localitati, setLocalitati] = useState([]);
+  
+  // Check if this is a nested component (used by JudetPage, etc)
+  const isNested = Object.keys(initialFilters).length > 0;
 
   useEffect(() => {
     loadJudete();
@@ -113,10 +116,12 @@ const SearchPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Căutare firme - {query || 'Toate companiile'} | mFirme</title>
-        <meta name="description" content={`Rezultate căutare: ${query || 'toate companiile din România'}`} />
-      </Helmet>
+      {!isNested && (
+        <Helmet>
+          <title>Căutare firme - {query || 'Toate companiile'} | mFirme</title>
+          <meta name="description" content={`Rezultate căutare: ${query || 'toate companiile din România'}`} />
+        </Helmet>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Search Bar */}

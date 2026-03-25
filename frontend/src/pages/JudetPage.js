@@ -5,25 +5,25 @@ import SearchPage from './SearchPage';
 
 const JudetPage = () => {
   const { slug } = useParams();
-  const judetName = decodeURIComponent(slug);
+  const judetName = decodeURIComponent(slug || '');
 
   return (
     <>
       <Helmet>
-        <title>Firme din {judetName} - Listă companii și date publice | mFirme</title>
+        <title>{judetName ? `Firme din ${judetName} - Listă companii și date publice | mFirme` : 'Firme din județ | mFirme'}</title>
         <meta 
           name="description" 
-          content={`Caută firme din județul ${judetName}. Vezi companii după localitate, domeniu, cifră de afaceri, profit, angajați și alte informații utile.`}
+          content={judetName ? `Caută firme din județul ${judetName}. Vezi companii după localitate, domeniu, cifră de afaceri, profit, angajați și alte informații utile.` : 'Listă firme din județ'}
         />
       </Helmet>
 
       <div className="bg-secondary/30 border-b border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-semibold tracking-tight mb-2" data-testid="judet-title">
-            Firme din județul {judetName}
+            Firme din județul {judetName || 'județ'}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Explorează toate companiile înregistrate în județul {judetName}
+            Explorează toate companiile înregistrate în județul {judetName || 'județ'}
           </p>
         </div>
       </div>
