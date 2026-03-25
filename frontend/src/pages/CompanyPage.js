@@ -269,7 +269,19 @@ const CompanyPage = () => {
                 {company.anaf_cod_caen && (
                   <div>
                     <dt className="text-xs text-muted-foreground mb-1">Cod CAEN</dt>
-                    <dd className="text-sm font-mono">{company.anaf_cod_caen}</dd>
+                    <dd className="text-sm" data-testid="company-caen">
+                      <span className="font-mono">{company.anaf_cod_caen}</span>
+                      {company.caen_denumire && (
+                        <p className="mt-1 text-muted-foreground">
+                          {company.caen_denumire}
+                        </p>
+                      )}
+                      {company.caen_sectiune && (
+                        <span className="inline-block mt-1.5 px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded">
+                          Secțiunea {company.caen_sectiune}: {company.caen_sectiune_denumire}
+                        </span>
+                      )}
+                    </dd>
                   </div>
                 )}
 

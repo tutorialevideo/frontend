@@ -196,6 +196,14 @@ async def get_company_by_cui(cui: str, current_user = Depends(get_current_user_o
         if postal_code:
             profile['cod_postal'] = postal_code
     
+    # Try to find CAEN description for the company
+    if app_db is not None and profile.get('anaf_cod_caen'):
+        caen_info = await find_caen_description(app_db, profile.get('anaf_cod_caen'))
+        if caen_info:
+            profile['caen_denumire'] = caen_info.get('denumire')
+            profile['caen_sectiune'] = caen_info.get('sectiune')
+            profile['caen_sectiune_denumire'] = caen_info.get('sectiune_denumire')
+    
     return serialize_doc(profile)
 
 @app.get("/api/company/slug/{slug}")
@@ -232,6 +240,14 @@ async def get_company_by_slug(slug: str, current_user = Depends(get_current_user
         )
         if postal_code:
             profile['cod_postal'] = postal_code
+    
+    # Try to find CAEN description for the company
+    if app_db is not None and profile.get('anaf_cod_caen'):
+        caen_info = await find_caen_description(app_db, profile.get('anaf_cod_caen'))
+        if caen_info:
+            profile['caen_denumire'] = caen_info.get('denumire')
+            profile['caen_sectiune'] = caen_info.get('sectiune')
+            profile['caen_sectiune_denumire'] = caen_info.get('sectiune_denumire')
     
     return serialize_doc(profile)
 
@@ -293,6 +309,27 @@ async def find_postal_code_for_company(app_db, judet: str, localitate: str) -> s
         print(f"Error finding postal code: {e}")
     
     return None
+
+
+async def find_caen_description(app_db, caen_code: str) -> dict:
+    """Find CAEN code description from caen_codes collection"""
+    if not caen_code:
+        return None
+    
+    # Normalize CAEN code (remove spaces, get first 4 digits)
+    caen_normalized = caen_code.strip().replace(' ', '')[:4]
+    
+    try:
+        caen_record = await app_db.caen_codes.find_one(
+            {"cod": caen_normalized},
+            {"_id": 0, "denumire": 1, "sectiune": 1, "sectiune_denumire": 1}
+        )
+        return caen_record
+    except Exception as e:
+        print(f"Error finding CAEN description: {e}")
+    
+    return None
+
 
 @app.get("/api/company/{cui}/financials")
 async def get_company_financials(cui: str):

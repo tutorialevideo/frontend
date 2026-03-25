@@ -29,7 +29,7 @@ Trebuie inclus un sistem de abonamente cu limitări de date și plăți. Baza de
 - ✅ Favorites functionality
 - ✅ Admin login and basic dashboard
 
-### Session 2 (Current) - Financial Charts + Postal Codes
+### Session 2 - Financial Charts + Postal Codes
 **Date: March 2026**
 
 #### Completed Features:
@@ -52,6 +52,17 @@ Trebuie inclus un sistem de abonamente cu limitări de date și plăți. Baza de
    - Fixed Admin login redirection
    - Fixed React Helmet crash on SearchPage
 
+### Session 3 (Current) - CAEN Codes Integration
+**Date: March 2026**
+
+#### Completed Features:
+1. **CAEN Rev.2 Codes Integration** (P0) ✅
+   - Imported 615 CAEN codes from ONRC website
+   - Created `caen_codes` collection with: cod, denumire, sectiune (A-U), sectiune_denumire
+   - Auto-lookup of CAEN description in company API endpoints
+   - Display on CompanyPage: code, full description, section badge
+   - 21 economic sections mapped (Agricultură, Industrie, Comerț, IT etc.)
+
 ## Database Schema
 
 ### justportal (Read-Only)
@@ -64,6 +75,7 @@ Trebuie inclus un sistem de abonamente cu limitări de date și plăți. Baza de
 - `audit_logs` - Admin action tracking
 - `postal_codes` - 55,123 Romanian postal codes
 - `localities` - 13,856 aggregated locality records
+- `caen_codes` - 615 CAEN Rev.2 codes with descriptions
 
 ## Key API Endpoints
 
@@ -88,6 +100,7 @@ Trebuie inclus un sistem de abonamente cu limitări de date și plăți. Baza de
 ### P0 (Critical) - DONE
 - ✅ Financial chart with dual lines
 - ✅ Postal codes integration
+- ✅ CAEN codes integration with descriptions
 
 ### P1 (High Priority)
 - [ ] Complete Stripe payment flow verification
@@ -111,17 +124,18 @@ Trebuie inclus un sistem de abonamente cu limitări de date și plăți. Baza de
 │   ├── server.py (main FastAPI app)
 │   ├── database.py (dual DB connections)
 │   ├── routes/
-│   │   ├── postal_routes.py (NEW)
+│   │   ├── postal_routes.py
 │   │   ├── admin_companies_routes.py
 │   │   └── ...
 │   └── scripts/
-│       └── import_postal_codes.py (NEW)
+│       ├── import_postal_codes.py
+│       └── import_caen_codes.py (NEW - 615 CAEN Rev.2)
 └── frontend/
     └── src/
         ├── components/
-        │   └── FinancialChart.js (UPDATED - dual lines + KPIs)
+        │   └── FinancialChart.js (dual lines + KPIs)
         └── pages/
-            └── CompanyPage.js (UPDATED - postal code display)
+            └── CompanyPage.js (postal code + CAEN display)
 ```
 
 ## Notes for Next Developer
@@ -130,3 +144,5 @@ Trebuie inclus un sistem de abonamente cu limitări de date și plăți. Baza de
 3. Postal code normalization handles: diacritics, "MUNICIPIUL/SECTOR" prefixes, București sectors
 4. Never write to `justportal` - use `company_overrides` for admin edits
 5. User speaks Romanian - keep UI text in Romanian
+6. CAEN lookup: strip to 4 digits and query `caen_codes.cod`
+7. PyMongo warning: Never use `if db:` - use `if db is not None:` to avoid NotImplementedError
