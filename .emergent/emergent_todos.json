@@ -1,10 +1,46 @@
 [
   {
-    "content": "Phase 2: End to End Testing using Testing Agent",
+    "content": "Phase 3: Backend - Install auth dependencies",
     "status": "completed"
   },
   {
-    "content": "Phase 2: All user stories covered in Development and testing",
+    "content": "Phase 3: Backend - Create user models and auth utilities",
     "status": "completed"
+  },
+  {
+    "content": "Phase 3: Backend - Auth endpoints (register, login, logout)",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 3: Backend - User profile and favorites endpoints",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 3: Backend - Stripe subscription endpoints",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 3: Backend - Update company endpoints for tier-based access",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 3: Frontend - Auth context and protected routes",
+    "status": "in_progress"
+  },
+  {
+    "content": "Phase 3: Frontend - Login and Register pages",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 3: Frontend - User dashboard pages",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 3: Frontend - Subscription and upgrade flow",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 3: End to End Testing",
+    "status": "pending"
   }
 ]

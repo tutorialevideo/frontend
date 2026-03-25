@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from contextlib import asynccontextmanager
 from database import connect_to_databases, close_database_connections, get_companies_db
 from utils import compute_company_profile, serialize_doc, normalize_cui, create_company_slug
+from auth import get_current_user_optional
 from typing import Optional, List
 import re
 import os
@@ -33,6 +34,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+from routes.auth_routes import router as auth_router
+from routes.user_routes import router as user_router
+from routes.subscription_routes import router as subscription_router
+
+app.include_router(auth_router)
+app.include_router(user_router)
+app.include_router(subscription_router)
 
 @app.get("/api/health")
 async def health_check():
@@ -149,7 +159,7 @@ async def search_companies(
     }
 
 @app.get("/api/company/cui/{cui}")
-async def get_company_by_cui(cui: str):
+async def get_company_by_cui(cui: str, current_user = Depends(get_current_user_optional)):
     """Get company by CUI"""
     db = get_companies_db()
     
@@ -159,11 +169,14 @@ async def get_company_by_cui(cui: str):
     if not result:
         raise HTTPException(status_code=404, detail="Company not found")
     
-    profile = compute_company_profile(result, tier="public")
+    # Determine user tier
+    tier = current_user["tier"] if current_user else "public"
+    
+    profile = compute_company_profile(result, tier=tier)
     return serialize_doc(profile)
 
 @app.get("/api/company/slug/{slug}")
-async def get_company_by_slug(slug: str):
+async def get_company_by_slug(slug: str, current_user = Depends(get_current_user_optional)):
     """Get company by slug"""
     db = get_companies_db()
     
@@ -180,7 +193,10 @@ async def get_company_by_slug(slug: str):
     if not result:
         raise HTTPException(status_code=404, detail="Company not found")
     
-    profile = compute_company_profile(result, tier="public")
+    # Determine user tier
+    tier = current_user["tier"] if current_user else "public"
+    
+    profile = compute_company_profile(result, tier=tier)
     return serialize_doc(profile)
 
 @app.get("/api/geo/judete")
