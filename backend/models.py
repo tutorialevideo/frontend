@@ -62,3 +62,70 @@ class FavoriteResponse(BaseModel):
 class SearchHistoryResponse(BaseModel):
     query: str
     created_at: str
+
+# Admin Models
+class CompanyOverride(BaseModel):
+    """Model for manual company data overrides"""
+    cui: str
+    field_name: str
+    override_value: Optional[str] = None
+    notes: Optional[str] = None
+    updated_by: str  # admin email
+    updated_at: str
+
+class FieldVisibility(BaseModel):
+    """Model for field-level visibility control"""
+    cui: str
+    field_name: str
+    visibility: str = Field(..., pattern="^(public|premium|hidden)$")  # public, premium, or hidden
+    updated_by: str
+    updated_at: str
+
+class SEOMetadata(BaseModel):
+    """Model for custom SEO metadata per company"""
+    cui: str
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    seo_text: Optional[str] = None
+    keywords: Optional[List[str]] = None
+    updated_by: str
+    updated_at: str
+
+class AuditLogEntry(BaseModel):
+    """Model for audit trail"""
+    action: str  # e.g., "company_override", "user_update", "field_visibility_change"
+    resource_type: str  # e.g., "company", "user", "subscription"
+    resource_id: str
+    admin_email: str
+    changes: dict
+    timestamp: str
+    ip_address: Optional[str] = None
+
+# Admin Request/Response Models
+class CompanySearchRequest(BaseModel):
+    query: str  # CUI or company name
+    limit: int = 50
+
+class CompanyOverrideRequest(BaseModel):
+    cui: str
+    overrides: dict  # field_name: new_value
+    notes: Optional[str] = None
+
+class FieldVisibilityRequest(BaseModel):
+    cui: str
+    field_name: str
+    visibility: str = Field(..., pattern="^(public|premium|hidden)$")
+
+class UserUpdateRequest(BaseModel):
+    user_id: str
+    tier: Optional[str] = None
+    role: Optional[str] = None
+    active: Optional[bool] = None
+
+class AdminStatsResponse(BaseModel):
+    """Detailed admin statistics"""
+    users: dict
+    engagement: dict
+    revenue: dict
+    platform: dict
+    recent_activity: Optional[List[dict]] = None

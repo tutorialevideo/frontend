@@ -1,22 +1,38 @@
 [
   {
-    "content": "Setup Stripe Sandbox - adaugă STRIPE_API_KEY (test key) în backend/.env",
+    "content": "Creez models pentru company_overrides, field_visibility, seo_metadata, audit_log în models.py",
     "status": "completed"
   },
   {
-    "content": "Testează Stripe checkout flow complet (create session → redirect → return → verify status)",
+    "content": "Implementez backend routes pentru admin/companies (search, get, update overrides, field visibility)",
+    "status": "completed"
+  },
+  {
+    "content": "Implementez backend routes pentru admin/users (list, update tier, update role, activate/deactivate)",
+    "status": "completed"
+  },
+  {
+    "content": "Implementez computed profile logic (merge raw data + overrides + visibility)",
+    "status": "completed"
+  },
+  {
+    "content": "Creez AdminLayout component cu sidebar navigation modern",
     "status": "in_progress"
   },
   {
-    "content": "Verifică și îmbunătățește webhook handling pentru Stripe (signature verification + reconciliation)",
+    "content": "Construiesc Companies Management page (search, edit, field visibility UI)",
     "status": "pending"
   },
   {
-    "content": "Identifică și elimină React warnings din SearchPage.js și CompanyPage.js (hydration errors, invalid nesting)",
+    "content": "Construiesc Users Management page (table sortabilă, acțiuni CRUD)",
     "status": "pending"
   },
   {
-    "content": "Testează end-to-end: Register → Login → View Profile → Upgrade to Premium → Verify unlocked features",
+    "content": "Implementez Audit Log viewer (istoric toate modificările admin)",
+    "status": "pending"
+  },
+  {
+    "content": "Testez end-to-end: admin caută firmă → editează → verifică override merge corect",
     "status": "pending"
   }
 ]

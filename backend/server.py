@@ -40,11 +40,17 @@ from routes.auth_routes import router as auth_router
 from routes.user_routes import router as user_router
 from routes.subscription_routes import router as subscription_router
 from routes.admin_routes import router as admin_router
+from routes.admin_companies_routes import router as admin_companies_router
+from routes.admin_users_routes import router as admin_users_router
+from routes.admin_audit_routes import router as admin_audit_router
 
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(subscription_router)
 app.include_router(admin_router)
+app.include_router(admin_companies_router)
+app.include_router(admin_users_router)
+app.include_router(admin_audit_router)
 
 @app.get("/api/health")
 async def health_check():
