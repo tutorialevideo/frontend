@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
-import { Building2, MapPin, Phone, Calendar, TrendingUp, Users, Briefcase, Lock } from 'lucide-react';
+import { Building2, MapPin, Phone, Calendar, TrendingUp, Users, Briefcase, Lock, Heart } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 const CompanyPage = () => {
@@ -9,10 +10,15 @@ const CompanyPage = () => {
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isFavorite, setIsFavorite] = useState(false);
+  const { user, isAuthenticated, token } = useAuth();
 
   useEffect(() => {
     loadCompany();
-  }, [slug]);
+    if (isAuthenticated) {
+      checkIfFavorite();
+    }
+  }, [slug, isAuthenticated]);
 
   const loadCompany = async () => {
     setLoading(true);
@@ -23,6 +29,48 @@ const CompanyPage = () => {
       console.error('Failed to load company:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkIfFavorite = async () => {
+    if (!token || !company) return;
+    
+    try {
+      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const res = await fetch(`${API_URL}/api/user/favorites`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const isFav = data.favorites.some(f => f.company_id === company.cui);
+        setIsFavorite(isFav);
+      }
+    } catch (error) {
+      console.error('Failed to check favorite:', error);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    if (!isAuthenticated) {
+      alert('Trebuie să fii autentificat pentru a adăuga favorite');
+      return;
+    }
+
+    try {
+      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const method = isFavorite ? 'DELETE' : 'POST';
+      
+      const res = await fetch(`${API_URL}/api/user/favorites/${company.cui}`, {
+        method,
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        setIsFavorite(!isFavorite);
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
     }
   };
 
@@ -75,7 +123,7 @@ const CompanyPage = () => {
           </nav>
 
           <div className="flex items-start justify-between">
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3" data-testid="company-name">
                 {company.denumire}
               </h1>
@@ -97,13 +145,27 @@ const CompanyPage = () => {
               </div>
             </div>
 
-            {company.anaf_stare && (
-              <div className="hidden md:block">
-                <div className="px-3 py-1.5 bg-green-500/10 text-green-700 text-xs font-medium rounded-lg">
+            <div className="flex items-center space-x-3">
+              {isAuthenticated && (
+                <button
+                  onClick={toggleFavorite}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isFavorite 
+                      ? 'bg-red-500/10 text-red-600 hover:bg-red-500/20' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  title={isFavorite ? 'Elimină din favorite' : 'Adaugă la favorite'}
+                >
+                  <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+                </button>
+              )}
+              
+              {company.anaf_stare && (
+                <div className="hidden md:block px-3 py-1.5 bg-green-500/10 text-green-700 text-xs font-medium rounded-lg">
                   Activ
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
