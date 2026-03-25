@@ -18,6 +18,36 @@ const AdminCompaniesPage = () => {
 
   const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
+  // Load initial companies on mount
+  React.useEffect(() => {
+    if (token) {  // Only load if token is available
+      loadInitialCompanies();
+    }
+  }, [token]);
+
+  const loadInitialCompanies = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/companies/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ query: '', limit: 100 })  // Empty query loads first 100 companies
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSearchResults(data.companies || []);
+      }
+    } catch (error) {
+      console.error('Failed to load companies:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;

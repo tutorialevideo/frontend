@@ -31,8 +31,11 @@ async def search_companies(
     
     query = request.query.strip()
     
+    # If empty query, return first N companies
+    if not query:
+        cursor = readonly_db.firme.find({}).limit(request.limit)
     # Try to search by CUI first (exact match, faster)
-    if query.isdigit():
+    elif query.isdigit():
         cursor = readonly_db.firme.find(
             {"cui": query}
         ).limit(request.limit)
