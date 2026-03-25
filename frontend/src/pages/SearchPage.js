@@ -118,7 +118,7 @@ const SearchPage = ({ initialFilters = {} }) => {
     <>
       {!isNested && (
         <Helmet>
-          <title>Căutare firme - {query || 'Toate companiile'} | mFirme</title>
+          <title>{`Căutare firme${query ? ` - ${query}` : ''} | mFirme`}</title>
           <meta name="description" content={`Rezultate căutare: ${query || 'toate companiile din România'}`} />
         </Helmet>
       )}
