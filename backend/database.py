@@ -37,5 +37,9 @@ async def close_database_connections():
 def get_companies_db():
     return companies_db
 
+def get_readonly_db():
+    """Alias for get_companies_db - readonly database with company data"""
+    return companies_db
+
 def get_app_db():
     return app_db

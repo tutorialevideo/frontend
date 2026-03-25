@@ -1,38 +1,18 @@
 [
   {
-    "content": "Creez models pentru company_overrides, field_visibility, seo_metadata, audit_log în models.py",
-    "status": "completed"
-  },
-  {
-    "content": "Implementez backend routes pentru admin/companies (search, get, update overrides, field visibility)",
-    "status": "completed"
-  },
-  {
-    "content": "Implementez backend routes pentru admin/users (list, update tier, update role, activate/deactivate)",
-    "status": "completed"
-  },
-  {
-    "content": "Implementez computed profile logic (merge raw data + overrides + visibility)",
-    "status": "completed"
-  },
-  {
-    "content": "Creez AdminLayout component cu sidebar navigation modern",
+    "content": "Test manual complet: Login admin → Caută firmă → Editează câmp → Salvează override → Verifică computed profile",
     "status": "in_progress"
   },
   {
-    "content": "Construiesc Companies Management page (search, edit, field visibility UI)",
+    "content": "Construiește Users Management page completă (table sortabilă, paginare, acțiuni CRUD)",
     "status": "pending"
   },
   {
-    "content": "Construiesc Users Management page (table sortabilă, acțiuni CRUD)",
+    "content": "Construiește Audit Log viewer page (table cu filtre, search, paginare)",
     "status": "pending"
   },
   {
-    "content": "Implementez Audit Log viewer (istoric toate modificările admin)",
-    "status": "pending"
-  },
-  {
-    "content": "Testez end-to-end: admin caută firmă → editează → verifică override merge corect",
+    "content": "Test E2E complet Admin Panel: toate secțiunile și funcționalitățile",
     "status": "pending"
   }
 ]

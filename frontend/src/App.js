@@ -15,6 +15,8 @@ import FavoritesPage from './pages/FavoritesPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminCompaniesPage from './pages/AdminCompaniesPage';
+import AdminUsersPage from './pages/AdminUsersPage';
+import AdminAuditPage from './pages/AdminAuditPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
@@ -42,6 +44,8 @@ function AppContent() {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/companies" element={<AdminCompaniesPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/audit" element={<AdminAuditPage />} />
         </Routes>
       </main>
       {!isAdminRoute && <Footer />}
