@@ -1,14 +1,14 @@
 [
   {
     "content": "Phase 1 POC: Set up Elasticsearch + Redis in Docker",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 1 POC: Create MongoDB Atlas Search index with autocomplete",
     "status": "in_progress"
   },
   {
-    "content": "Phase 1 POC: Create ES index mapping with autocomplete + typo tolerance",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 1 POC: Write poc_index.py to bulk index 10k companies",
+    "content": "Phase 1 POC: Write poc_index.py to test Atlas Search setup",
     "status": "pending"
   },
   {
