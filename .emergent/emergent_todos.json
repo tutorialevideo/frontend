@@ -1,42 +1,6 @@
 [
   {
-    "content": "Phase 2: Backend - Install dependencies",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: Backend - Core models and database setup",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: Backend - Search and company endpoints",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: Backend - SEO and geo endpoints",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: Frontend - Install dependencies",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: Frontend - Homepage with search",
-    "status": "in_progress"
-  },
-  {
-    "content": "Phase 2: Frontend - Search results and filters",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2: Frontend - Company profile page",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2: Frontend - Category pages (judet, localitate, CAEN)",
-    "status": "pending"
-  },
-  {
     "content": "Phase 2: End to End Testing using Testing Agent",
-    "status": "pending"
+    "status": "in_progress"
   }
 ]

@@ -22,12 +22,8 @@ async def connect_to_databases():
     app_client = AsyncIOMotorClient(app_mongo_url)
     app_db = app_client["mfirme_app"]
     
-    # Create indexes for companies collection
-    await companies_db.firme.create_index([("cui", 1)])
-    await companies_db.firme.create_index([("denumire", 1)])
-    await companies_db.firme.create_index([("judet", 1)])
-    await companies_db.firme.create_index([("localitate", 1)])
-    await companies_db.firme.create_index([("anaf_cod_caen", 1)])
+    # Note: Indexes already exist on the companies database
+    # Read-only user cannot create indexes
     
     print("✓ Connected to MongoDB databases")
 

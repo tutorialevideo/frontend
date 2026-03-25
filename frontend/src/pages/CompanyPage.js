@@ -275,31 +275,31 @@ const CompanyPage = () => {
             {/* Financial Details Table */}
             <div className="bg-card border border-border rounded-xl p-6">
               <h3 className="text-sm font-semibold mb-4">Detalii financiare</h3>
-              <div className="overflow-x-auto\">
-                <table className=\"w-full text-sm\">
-                  <tbody className=\"divide-y divide-border\">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <tbody className="divide-y divide-border">
                     {company.mf_venituri_totale && (
                       <tr>
-                        <td className=\"py-3 text-muted-foreground\">Venituri totale</td>
-                        <td className=\"py-3 text-right font-medium\">{company.mf_venituri_totale.toLocaleString('ro-RO')} RON</td>
+                        <td className="py-3 text-muted-foreground">Venituri totale</td>
+                        <td className="py-3 text-right font-medium">{company.mf_venituri_totale.toLocaleString('ro-RO')} RON</td>
                       </tr>
                     )}
                     {company.mf_cheltuieli_totale && (
                       <tr>
-                        <td className=\"py-3 text-muted-foreground\">Cheltuieli totale</td>
-                        <td className=\"py-3 text-right font-medium\">{company.mf_cheltuieli_totale.toLocaleString('ro-RO')} RON</td>
+                        <td className="py-3 text-muted-foreground">Cheltuieli totale</td>
+                        <td className="py-3 text-right font-medium">{company.mf_cheltuieli_totale.toLocaleString('ro-RO')} RON</td>
                       </tr>
                     )}
                     {company.mf_capitaluri_proprii && (
                       <tr>
-                        <td className=\"py-3 text-muted-foreground\">Capitaluri proprii</td>
-                        <td className=\"py-3 text-right font-medium\">{company.mf_capitaluri_proprii.toLocaleString('ro-RO')} RON</td>
+                        <td className="py-3 text-muted-foreground">Capitaluri proprii</td>
+                        <td className="py-3 text-right font-medium">{company.mf_capitaluri_proprii.toLocaleString('ro-RO')} RON</td>
                       </tr>
                     )}
                     {company.mf_datorii && (
                       <tr>
-                        <td className=\"py-3 text-muted-foreground\">Datorii</td>
-                        <td className=\"py-3 text-right font-medium\">{company.mf_datorii.toLocaleString('ro-RO')} RON</td>
+                        <td className="py-3 text-muted-foreground">Datorii</td>
+                        <td className="py-3 text-right font-medium">{company.mf_datorii.toLocaleString('ro-RO')} RON</td>
                       </tr>
                     )}
                   </tbody>
@@ -311,31 +311,31 @@ const CompanyPage = () => {
 
         {/* Juridic Tab */}
         {activeTab === 'juridic' && (
-          <div className=\"bg-card border border-border rounded-xl p-6\">
-            <h3 className=\"text-sm font-semibold mb-4\">Informații juridice</h3>
-            <dl className=\"space-y-4\">
+          <div className="bg-card border border-border rounded-xl p-6">
+            <h3 className="text-sm font-semibold mb-4">Informații juridice</h3>
+            <dl className="space-y-4">
               {company.anaf_organ_fiscal && (
                 <div>
-                  <dt className=\"text-xs text-muted-foreground mb-1\">Organ fiscal</dt>
-                  <dd className=\"text-sm\">{company.anaf_organ_fiscal}</dd>
+                  <dt className="text-xs text-muted-foreground mb-1">Organ fiscal</dt>
+                  <dd className="text-sm">{company.anaf_organ_fiscal}</dd>
                 </div>
               )}
               {company.anaf_data_inregistrare && (
                 <div>
-                  <dt className=\"text-xs text-muted-foreground mb-1\">Data înregistrare ANAF</dt>
-                  <dd className=\"text-sm\">{company.anaf_data_inregistrare}</dd>
+                  <dt className="text-xs text-muted-foreground mb-1">Data înregistrare ANAF</dt>
+                  <dd className="text-sm">{company.anaf_data_inregistrare}</dd>
                 </div>
               )}
               {company.anaf_forma_organizare && (
                 <div>
-                  <dt className=\"text-xs text-muted-foreground mb-1\">Formă de organizare</dt>
-                  <dd className=\"text-sm\">{company.anaf_forma_organizare}</dd>
+                  <dt className="text-xs text-muted-foreground mb-1">Formă de organizare</dt>
+                  <dd className="text-sm">{company.anaf_forma_organizare}</dd>
                 </div>
               )}
               {company.anaf_forma_proprietate && (
                 <div>
-                  <dt className=\"text-xs text-muted-foreground mb-1\">Formă de proprietate</dt>
-                  <dd className=\"text-sm\">{company.anaf_forma_proprietate}</dd>
+                  <dt className="text-xs text-muted-foreground mb-1">Formă de proprietate</dt>
+                  <dd className="text-sm">{company.anaf_forma_proprietate}</dd>
                 </div>
               )}
             </dl>
@@ -343,13 +343,13 @@ const CompanyPage = () => {
         )}
 
         {/* Premium CTA */}
-        <div className=\"mt-8 bg-gradient-to-r from-primary/10 to-accent border border-primary/20 rounded-xl p-6 text-center\">
-          <Lock className=\"w-8 h-8 mx-auto mb-3 text-primary\" />
-          <h3 className=\"text-lg font-semibold mb-2\">Deblochează informații premium</h3>
-          <p className=\"text-sm text-muted-foreground mb-4\">
+        <div className="mt-8 bg-gradient-to-r from-primary/10 to-accent border border-primary/20 rounded-xl p-6 text-center">
+          <Lock className="w-8 h-8 mx-auto mb-3 text-primary" />
+          <h3 className="text-lg font-semibold mb-2">Deblochează informații premium</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             Accesează date complete despre administratori, acționari, contacte și mult mai mult
           </p>
-          <button className=\"px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm\">
+          <button className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm">
             Vezi planuri Premium
           </button>
         </div>
