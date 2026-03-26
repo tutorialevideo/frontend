@@ -9,9 +9,9 @@ COPY craco.config.js ./
 COPY tailwind.config.js ./
 COPY postcss.config.js ./
 
-# Install dependencies with explicit ajv fix
+# Install dependencies with fixes
 RUN npm install --legacy-peer-deps --loglevel=error && \
-    npm install ajv@8 ajv-keywords@5 --save --legacy-peer-deps
+    npm install ajv@8 ajv-keywords@5 eslint-webpack-plugin --save-dev --legacy-peer-deps
 
 # Copy source code
 COPY public ./public
