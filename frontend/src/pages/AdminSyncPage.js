@@ -12,7 +12,9 @@ import {
   ArrowDownToLine,
   Save,
   Eye,
-  EyeOff
+  EyeOff,
+  Activity,
+  Zap
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AdminLayout from '../components/AdminLayout';
@@ -347,13 +349,74 @@ const AdminSyncPage = () => {
                     <span className="font-mono font-medium">{formatNumber(count)}</span>
                   </div>
                 ))}
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Status</span>
                   <span className="flex items-center gap-1 text-green-600">
                     <CheckCircle className="w-4 h-4" />
                     Active
                   </span>
                 </div>
+                
+                {/* Performance Metrics */}
+                {syncStatus?.local_performance && (
+                  <>
+                    <div className="flex justify-between py-2 border-b border-border">
+                      <span className="text-muted-foreground">Ping latență</span>
+                      <span className={`font-mono font-medium ${
+                        syncStatus.local_performance.ping_ms < 5 ? 'text-green-600' : 
+                        syncStatus.local_performance.ping_ms < 20 ? 'text-amber-600' : 'text-red-600'
+                      }`}>
+                        {syncStatus.local_performance.ping_ms || '?'} ms
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-border">
+                      <span className="text-muted-foreground">Query viteză</span>
+                      <span className={`font-mono font-medium ${
+                        syncStatus.local_performance.query_ms < 10 ? 'text-green-600' : 
+                        syncStatus.local_performance.query_ms < 50 ? 'text-amber-600' : 'text-red-600'
+                      }`}>
+                        {syncStatus.local_performance.query_ms || '?'} ms
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="text-muted-foreground">Performanță</span>
+                      <span className={`flex items-center gap-1 font-medium ${
+                        syncStatus.local_performance.status === 'fast' ? 'text-green-600' : 'text-amber-600'
+                      }`}>
+                        {syncStatus.local_performance.status === 'fast' ? (
+                          <>
+                            <Activity className="w-4 h-4" />
+                            Foarte rapidă
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-4 h-4" />
+                            Normală
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </>
+                )}
+                
+                {/* Cloud comparison */}
+                {syncStatus?.cloud_latency_ms && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <div className="text-xs text-muted-foreground mb-2">Comparație cu Cloud:</div>
+                    <div className="flex justify-between text-sm">
+                      <span>Cloud latență:</span>
+                      <span className="font-mono text-amber-600">{syncStatus.cloud_latency_ms} ms</span>
+                    </div>
+                    {syncStatus.local_performance?.ping_ms && syncStatus.cloud_latency_ms && (
+                      <div className="flex justify-between text-sm mt-1">
+                        <span>Local mai rapid cu:</span>
+                        <span className="font-mono text-green-600 font-medium">
+                          {Math.round(syncStatus.cloud_latency_ms / syncStatus.local_performance.ping_ms)}x
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">

@@ -197,14 +197,43 @@ async def run_full_sync(cloud_db, local_db, collections: list):
 @router.get("/status")
 async def get_sync_status(admin_user = Depends(verify_admin)):
     """Get comprehensive sync status"""
+    import time
+    
     local_health = await check_local_db_health()
+    
+    # Measure local DB latency
+    local_latency = None
+    local_db = get_local_db()
+    if local_db is not None:
+        try:
+            start = time.perf_counter()
+            await local_db.command('ping')
+            local_latency = round((time.perf_counter() - start) * 1000, 2)  # ms
+        except:
+            pass
+    
+    # Measure query speed (count query)
+    query_speed = None
+    if local_db is not None:
+        try:
+            start = time.perf_counter()
+            await local_db.firme.find_one({})
+            query_speed = round((time.perf_counter() - start) * 1000, 2)  # ms
+        except:
+            pass
     
     cloud_db = get_cloud_db()
     cloud_counts = {}
     cloud_connected = False
+    cloud_latency = None
     
     if cloud_db is not None:
         try:
+            # Measure cloud latency
+            start = time.perf_counter()
+            await cloud_db.command('ping')
+            cloud_latency = round((time.perf_counter() - start) * 1000, 2)  # ms
+            
             for col in ['firme', 'bilanturi']:
                 cloud_counts[col] = await cloud_db[col].estimated_document_count()
             cloud_connected = True
@@ -214,8 +243,14 @@ async def get_sync_status(admin_user = Depends(verify_admin)):
     return {
         "mode": "local",
         "local_db": local_health,
+        "local_performance": {
+            "ping_ms": local_latency,
+            "query_ms": query_speed,
+            "status": "fast" if local_latency and local_latency < 5 else "normal" if local_latency else "unknown"
+        },
         "cloud_counts": cloud_counts,
         "cloud_connected": cloud_connected,
+        "cloud_latency_ms": cloud_latency,
         "sync_state": {
             "is_running": sync_state["is_running"],
             "status": sync_state["status"],
