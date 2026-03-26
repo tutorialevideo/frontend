@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
-import { Building2, MapPin, Phone, Calendar, TrendingUp, Users, Briefcase, Lock, Heart, FileText, DollarSign, Activity } from 'lucide-react';
+import { Building2, MapPin, Phone, Calendar, TrendingUp, Users, Briefcase, Lock, Heart, FileText, DollarSign, Activity, Shield, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCredits } from '../contexts/CreditsContext';
 import api from '../services/api';
@@ -10,11 +10,15 @@ import FinancialChart from '../components/FinancialChart';
 const CompanyPage = () => {
   const { slug } = useParams();
   const [company, setCompany] = useState(null);
+  const [fullData, setFullData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showAllFields, setShowAllFields] = useState(false);
   const { user, isAuthenticated, token } = useAuth();
   const { consumeCredit, systemEnabled } = useCredits();
   const creditConsumedRef = useRef(false);
+
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     loadCompany();
@@ -25,11 +29,18 @@ const CompanyPage = () => {
   }, [slug, isAuthenticated]);
 
   useEffect(() => {
-    if (company && isAuthenticated && systemEnabled && !creditConsumedRef.current) {
+    // Load full data for admin
+    if (company && isAdmin && token) {
+      loadFullData();
+    }
+  }, [company, isAdmin, token]);
+
+  useEffect(() => {
+    if (company && isAuthenticated && systemEnabled && !creditConsumedRef.current && !isAdmin) {
       creditConsumedRef.current = true;
       consumeCredit(company.cui);
     }
-  }, [company, isAuthenticated, systemEnabled]);
+  }, [company, isAuthenticated, systemEnabled, isAdmin]);
 
   const loadCompany = async () => {
     setLoading(true);
@@ -40,6 +51,21 @@ const CompanyPage = () => {
       console.error('Failed to load company:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFullData = async () => {
+    try {
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
+      const res = await fetch(`${API_URL}/api/admin/companies/full/${company.cui}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFullData(data);
+      }
+    } catch (err) {
+      console.error('Failed to load full data:', err);
     }
   };
 
@@ -84,7 +110,12 @@ const CompanyPage = () => {
     }
   };
 
-  const isPhoneMasked = company?.anaf_telefon?.includes('***');
+  const formatValue = (value) => {
+    if (value === null || value === undefined || value === '') return '-';
+    if (typeof value === 'boolean') return value ? 'Da' : 'Nu';
+    if (typeof value === 'number') return value.toLocaleString('ro-RO');
+    return String(value);
+  };
 
   if (loading) {
     return (
@@ -108,6 +139,10 @@ const CompanyPage = () => {
   }
 
   const pageTitle = company.denumire ? `${company.denumire} - CUI ${company.cui} | mFirme` : 'Profil Firmă | mFirme';
+  
+  // Use full data for admin, otherwise use company data
+  const displayData = isAdmin && fullData ? fullData : company;
+  const allFields = fullData ? Object.keys(fullData).filter(k => !k.startsWith('_') && k !== 'id').sort() : [];
 
   return (
     <>
@@ -117,6 +152,23 @@ const CompanyPage = () => {
       </Helmet>
 
       <div className="max-w-5xl mx-auto space-y-6">
+        {/* Admin Badge */}
+        {isAdmin && (
+          <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 flex items-center gap-3">
+            <Shield className="w-5 h-5 text-purple-600" />
+            <div>
+              <span className="font-medium text-purple-700">Vizualizare Admin</span>
+              <span className="text-sm text-purple-600 ml-2">- Vezi toate datele firmei ({allFields.length} câmpuri)</span>
+            </div>
+            <Link 
+              to={`/admin/companies`}
+              className="ml-auto px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700"
+            >
+              Editează în Admin
+            </Link>
+          </div>
+        )}
+
         {/* Header */}
         <div className="bg-card border border-border rounded-xl p-6" data-testid="company-header">
           <div className="flex items-start justify-between">
@@ -124,44 +176,44 @@ const CompanyPage = () => {
               <div className="flex items-center space-x-3 mb-2">
                 <Building2 className="w-8 h-8 text-primary" />
                 <h1 className="text-2xl md:text-3xl font-semibold tracking-tight" data-testid="company-name">
-                  {company.denumire}
+                  {displayData.denumire}
                 </h1>
               </div>
               
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
-                <span className="font-mono" data-testid="company-cui">CUI: {company.cui}</span>
+                <span className="font-mono" data-testid="company-cui">CUI: {displayData.cui}</span>
                 <span className="flex items-center space-x-1">
                   <MapPin className="w-4 h-4" />
-                  <span data-testid="company-location">{company.localitate}, {company.judet}</span>
+                  <span data-testid="company-location">{displayData.localitate}, {displayData.judet}</span>
                 </span>
-                {company.anaf_data_inregistrare && (
+                {displayData.anaf_data_inregistrare && (
                   <span className="flex items-center space-x-1">
                     <Calendar className="w-4 h-4" />
-                    <span>Din {company.anaf_data_inregistrare}</span>
+                    <span>Din {displayData.anaf_data_inregistrare}</span>
                   </span>
                 )}
               </div>
 
               {/* Status badges */}
               <div className="flex flex-wrap gap-2">
-                {company.anaf_stare_startswith_inregistrat && (
+                {displayData.anaf_stare_startswith_inregistrat && (
                   <span className="px-3 py-1 bg-green-500/10 text-green-700 text-xs font-medium rounded-full">
                     Activ ANAF
                   </span>
                 )}
-                {(company.anaf_platitor_tva || company.mf_platitor_tva) && (
+                {(displayData.anaf_platitor_tva || displayData.mf_platitor_tva) && (
                   <span className="px-3 py-1 bg-blue-500/10 text-blue-700 text-xs font-medium rounded-full">
                     Plătitor TVA
                   </span>
                 )}
-                {company.mf_an_bilant && (
+                {displayData.mf_an_bilant && (
                   <span className="px-3 py-1 bg-purple-500/10 text-purple-700 text-xs font-medium rounded-full">
-                    Bilanț {company.mf_an_bilant}
+                    Bilanț {displayData.mf_an_bilant}
                   </span>
                 )}
-                {company.forma_juridica && (
+                {displayData.forma_juridica && (
                   <span className="px-3 py-1 bg-gray-500/10 text-gray-700 text-xs font-medium rounded-full">
-                    {company.forma_juridica}
+                    {displayData.forma_juridica}
                   </span>
                 )}
               </div>
@@ -192,8 +244,8 @@ const CompanyPage = () => {
               <span className="text-xs text-muted-foreground">Cifra de afaceri</span>
             </div>
             <div className="text-xl font-semibold tracking-tight">
-              {company.mf_cifra_afaceri 
-                ? `${company.mf_cifra_afaceri.toLocaleString('ro-RO')} RON`
+              {displayData.mf_cifra_afaceri 
+                ? `${displayData.mf_cifra_afaceri.toLocaleString('ro-RO')} RON`
                 : 'N/A'}
             </div>
           </div>
@@ -204,8 +256,8 @@ const CompanyPage = () => {
               <span className="text-xs text-muted-foreground">Profit net</span>
             </div>
             <div className="text-xl font-semibold tracking-tight">
-              {company.mf_profit_net 
-                ? `${company.mf_profit_net.toLocaleString('ro-RO')} RON`
+              {displayData.mf_profit_net 
+                ? `${displayData.mf_profit_net.toLocaleString('ro-RO')} RON`
                 : 'N/A'}
             </div>
           </div>
@@ -216,7 +268,7 @@ const CompanyPage = () => {
               <span className="text-xs text-muted-foreground">Angajați</span>
             </div>
             <div className="text-xl font-semibold tracking-tight">
-              {company.mf_numar_angajati ?? 'N/A'}
+              {displayData.mf_numar_angajati ?? 'N/A'}
             </div>
           </div>
 
@@ -226,10 +278,10 @@ const CompanyPage = () => {
               <span className="text-xs text-muted-foreground">Cod CAEN</span>
             </div>
             <div className="text-xl font-semibold tracking-tight font-mono">
-              {company.anaf_cod_caen || 'N/A'}
+              {displayData.anaf_cod_caen || 'N/A'}
             </div>
-            {company.caen_denumire && (
-              <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{company.caen_denumire}</div>
+            {displayData.caen_denumire && (
+              <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{displayData.caen_denumire}</div>
             )}
           </div>
         </div>
@@ -249,24 +301,24 @@ const CompanyPage = () => {
               <div>
                 <dt className="text-xs text-muted-foreground mb-1">Adresă</dt>
                 <dd className="text-sm" data-testid="company-address">
-                  {company.anaf_adresa || (
+                  {displayData.anaf_adresa || (
                     <>
-                      {company.strada && `${company.strada} ${company.numar || ''}`}
-                      {company.strada && <br />}
-                      {company.localitate}, {company.judet}
-                      {company.cod_postal && `, ${company.cod_postal}`}
+                      {displayData.strada && `${displayData.strada} ${displayData.numar || ''}`}
+                      {displayData.strada && <br />}
+                      {displayData.localitate}, {displayData.judet}
+                      {displayData.cod_postal && `, ${displayData.cod_postal}`}
                     </>
                   )}
                 </dd>
               </div>
 
-              {company.anaf_telefon && (
+              {displayData.anaf_telefon && (
                 <div>
                   <dt className="text-xs text-muted-foreground mb-1">Telefon</dt>
                   <dd className="text-sm flex items-center space-x-2" data-testid="company-phone">
                     <Phone className="w-4 h-4" />
-                    <span>{company.anaf_telefon}</span>
-                    {isPhoneMasked && (
+                    <span>{displayData.anaf_telefon}</span>
+                    {!isAdmin && displayData.anaf_telefon?.includes('***') && (
                       <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-amber-500/10 text-amber-700 text-xs rounded">
                         <Lock className="w-3 h-3" />
                         <span>Premium</span>
@@ -276,10 +328,24 @@ const CompanyPage = () => {
                 </div>
               )}
 
-              {company.anaf_fax && (
+              {displayData.anaf_fax && (
                 <div>
                   <dt className="text-xs text-muted-foreground mb-1">Fax</dt>
-                  <dd className="text-sm">{company.anaf_fax}</dd>
+                  <dd className="text-sm">{displayData.anaf_fax}</dd>
+                </div>
+              )}
+
+              {isAdmin && displayData.email && (
+                <div>
+                  <dt className="text-xs text-muted-foreground mb-1">Email</dt>
+                  <dd className="text-sm">{displayData.email}</dd>
+                </div>
+              )}
+
+              {isAdmin && displayData.website && (
+                <div>
+                  <dt className="text-xs text-muted-foreground mb-1">Website</dt>
+                  <dd className="text-sm">{displayData.website}</dd>
                 </div>
               )}
             </dl>
@@ -292,54 +358,54 @@ const CompanyPage = () => {
               Informații generale
             </h3>
             <dl className="space-y-3">
-              {company.forma_juridica && (
+              {displayData.forma_juridica && (
                 <div>
                   <dt className="text-xs text-muted-foreground mb-1">Formă juridică</dt>
-                  <dd className="text-sm">{company.anaf_forma_juridica || company.forma_juridica}</dd>
+                  <dd className="text-sm">{displayData.anaf_forma_juridica || displayData.forma_juridica}</dd>
                 </div>
               )}
 
-              {company.anaf_cod_caen && (
+              {displayData.anaf_cod_caen && (
                 <div>
                   <dt className="text-xs text-muted-foreground mb-1">Cod CAEN</dt>
                   <dd className="text-sm">
-                    <span className="font-mono font-medium">{company.anaf_cod_caen}</span>
-                    {company.caen_denumire && (
-                      <span className="ml-2 text-muted-foreground">- {company.caen_denumire}</span>
+                    <span className="font-mono font-medium">{displayData.anaf_cod_caen}</span>
+                    {displayData.caen_denumire && (
+                      <span className="ml-2 text-muted-foreground">- {displayData.caen_denumire}</span>
                     )}
                   </dd>
                 </div>
               )}
 
-              {company.caen_sectiune && (
+              {displayData.caen_sectiune && (
                 <div>
                   <dt className="text-xs text-muted-foreground mb-1">Secțiune CAEN</dt>
                   <dd className="text-sm">
                     <span className="px-2 py-0.5 bg-blue-500/10 text-blue-700 rounded text-xs">
-                      {company.caen_sectiune}: {company.caen_sectiune_denumire}
+                      {displayData.caen_sectiune}: {displayData.caen_sectiune_denumire}
                     </span>
                   </dd>
                 </div>
               )}
 
-              {company.anaf_stare && (
+              {displayData.anaf_stare && (
                 <div>
                   <dt className="text-xs text-muted-foreground mb-1">Stare ANAF</dt>
-                  <dd className="text-sm">{company.anaf_stare}</dd>
+                  <dd className="text-sm">{displayData.anaf_stare}</dd>
                 </div>
               )}
 
-              {company.anaf_data_inregistrare && (
+              {displayData.anaf_data_inregistrare && (
                 <div>
                   <dt className="text-xs text-muted-foreground mb-1">Data înregistrare</dt>
-                  <dd className="text-sm">{company.anaf_data_inregistrare}</dd>
+                  <dd className="text-sm">{displayData.anaf_data_inregistrare}</dd>
                 </div>
               )}
 
-              {company.anaf_organ_fiscal && (
+              {displayData.anaf_organ_fiscal && (
                 <div>
                   <dt className="text-xs text-muted-foreground mb-1">Organ fiscal</dt>
-                  <dd className="text-sm">{company.anaf_organ_fiscal}</dd>
+                  <dd className="text-sm">{displayData.anaf_organ_fiscal}</dd>
                 </div>
               )}
             </dl>
@@ -347,64 +413,111 @@ const CompanyPage = () => {
         </div>
 
         {/* Financial Details */}
-        {(company.mf_venituri_totale || company.mf_cheltuieli_totale || company.mf_capitaluri_proprii || company.mf_datorii) && (
+        {(displayData.mf_venituri_totale || displayData.mf_cheltuieli_totale || displayData.mf_capitaluri_proprii || displayData.mf_datorii) && (
           <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
               <Activity className="w-4 h-4" />
-              Detalii financiare ({company.mf_an_bilant || 'Ultimul an'})
+              Detalii financiare ({displayData.mf_an_bilant || 'Ultimul an'})
             </h3>
             <div className="grid md:grid-cols-2 gap-4">
-              {company.mf_venituri_totale && (
+              {displayData.mf_venituri_totale && (
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-sm text-muted-foreground">Venituri totale</span>
-                  <span className="text-sm font-medium">{company.mf_venituri_totale.toLocaleString('ro-RO')} RON</span>
+                  <span className="text-sm font-medium">{displayData.mf_venituri_totale.toLocaleString('ro-RO')} RON</span>
                 </div>
               )}
-              {company.mf_cheltuieli_totale && (
+              {displayData.mf_cheltuieli_totale && (
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-sm text-muted-foreground">Cheltuieli totale</span>
-                  <span className="text-sm font-medium">{company.mf_cheltuieli_totale.toLocaleString('ro-RO')} RON</span>
+                  <span className="text-sm font-medium">{displayData.mf_cheltuieli_totale.toLocaleString('ro-RO')} RON</span>
                 </div>
               )}
-              {company.mf_capitaluri_proprii && (
+              {displayData.mf_capitaluri_proprii && (
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-sm text-muted-foreground">Capitaluri proprii</span>
-                  <span className="text-sm font-medium">{company.mf_capitaluri_proprii.toLocaleString('ro-RO')} RON</span>
+                  <span className="text-sm font-medium">{displayData.mf_capitaluri_proprii.toLocaleString('ro-RO')} RON</span>
                 </div>
               )}
-              {company.mf_datorii && (
+              {displayData.mf_datorii && (
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-sm text-muted-foreground">Datorii</span>
-                  <span className="text-sm font-medium">{company.mf_datorii.toLocaleString('ro-RO')} RON</span>
+                  <span className="text-sm font-medium">{displayData.mf_datorii.toLocaleString('ro-RO')} RON</span>
                 </div>
               )}
-              {company.mf_active_circulante && (
+              {displayData.mf_active_circulante && (
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-sm text-muted-foreground">Active circulante</span>
-                  <span className="text-sm font-medium">{company.mf_active_circulante.toLocaleString('ro-RO')} RON</span>
+                  <span className="text-sm font-medium">{displayData.mf_active_circulante.toLocaleString('ro-RO')} RON</span>
                 </div>
               )}
-              {company.mf_active_imobilizate && (
+              {displayData.mf_active_imobilizate && (
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-sm text-muted-foreground">Active imobilizate</span>
-                  <span className="text-sm font-medium">{company.mf_active_imobilizate.toLocaleString('ro-RO')} RON</span>
+                  <span className="text-sm font-medium">{displayData.mf_active_imobilizate.toLocaleString('ro-RO')} RON</span>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Premium CTA */}
-        <div className="bg-gradient-to-r from-primary/10 to-accent border border-primary/20 rounded-xl p-6 text-center">
-          <Lock className="w-8 h-8 mx-auto mb-3 text-primary" />
-          <h3 className="text-lg font-semibold mb-2">Deblochează informații premium</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Accesează date complete despre administratori, acționari, contacte și mult mai mult
-          </p>
-          <button className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm">
-            Vezi planuri Premium
-          </button>
-        </div>
+        {/* Admin - All Fields Section */}
+        {isAdmin && fullData && (
+          <div className="bg-card border border-purple-500/30 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setShowAllFields(!showAllFields)}
+              className="w-full px-6 py-4 flex items-center justify-between bg-purple-500/5 hover:bg-purple-500/10 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-purple-600" />
+                <span className="font-semibold text-purple-700">
+                  Toate datele din baza de date ({allFields.length} câmpuri)
+                </span>
+              </div>
+              {showAllFields ? (
+                <ChevronUp className="w-5 h-5 text-purple-600" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-purple-600" />
+              )}
+            </button>
+            
+            {showAllFields && (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground w-1/3">Câmp</th>
+                      <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground">Valoare</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {allFields.map(fieldName => (
+                      <tr key={fieldName} className="hover:bg-muted/20">
+                        <td className="px-4 py-2 text-sm font-medium">{fieldName}</td>
+                        <td className="px-4 py-2 text-sm text-muted-foreground">
+                          {formatValue(fullData[fieldName])}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Premium CTA - Only for non-admin */}
+        {!isAdmin && (
+          <div className="bg-gradient-to-r from-primary/10 to-accent border border-primary/20 rounded-xl p-6 text-center">
+            <Lock className="w-8 h-8 mx-auto mb-3 text-primary" />
+            <h3 className="text-lg font-semibold mb-2">Deblochează informații premium</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Accesează date complete despre administratori, acționari, contacte și mult mai mult
+            </p>
+            <button className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm">
+              Vezi planuri Premium
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

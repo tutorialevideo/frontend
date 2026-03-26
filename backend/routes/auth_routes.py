@@ -71,7 +71,8 @@ async def login(credentials: UserLogin):
         data={
             "sub": user["email"],
             "user_id": str(user["_id"]),
-            "tier": user.get("tier", "free")
+            "tier": user.get("tier", "free"),
+            "role": user.get("role", "user")
         }
     )
     

@@ -2,7 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Heart, Search, CreditCard } from 'lucide-react';
+import { User, Heart, Search, CreditCard, Key } from 'lucide-react';
 
 const AccountPage = () => {
   const navigate = useNavigate();
@@ -62,7 +62,7 @@ const AccountPage = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-4 gap-4">
           <button
             onClick={() => navigate('/account/favorites')}
             className="bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-all text-left group"
@@ -94,6 +94,18 @@ const AccountPage = () => {
             </div>
             <h3 className="text-sm font-semibold mb-1">Abonament</h3>
             <p className="text-xs text-muted-foreground">Gestionează planul tău</p>
+          </button>
+
+          <button
+            onClick={() => navigate('/account/api-keys')}
+            className="bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-all text-left group"
+            data-testid="api-keys-btn"
+          >
+            <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-500/20 transition-colors">
+              <Key className="w-6 h-6 text-purple-600" />
+            </div>
+            <h3 className="text-sm font-semibold mb-1">Chei API</h3>
+            <p className="text-xs text-muted-foreground">Acces programatic la date</p>
           </button>
         </div>
 

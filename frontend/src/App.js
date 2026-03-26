@@ -20,6 +20,8 @@ import AdminCompaniesPage from './pages/AdminCompaniesPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminAuditPage from './pages/AdminAuditPage';
 import AdminSyncPage from './pages/AdminSyncPage';
+import ApiKeysPage from './pages/ApiKeysPage';
+import AdminApiKeysPage from './pages/AdminApiKeysPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import NoCreditsModal from './components/NoCreditsModal';
@@ -45,6 +47,7 @@ function AppContent() {
           <Route path="/account/favorites" element={<FavoritesPage />} />
           <Route path="/account/subscription" element={<SubscriptionPage />} />
           <Route path="/account/credits" element={<CreditsPage />} />
+          <Route path="/account/api-keys" element={<ApiKeysPage />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminDashboardPage />} />
@@ -52,6 +55,7 @@ function AppContent() {
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/audit" element={<AdminAuditPage />} />
           <Route path="/admin/sync" element={<AdminSyncPage />} />
+          <Route path="/admin/api-keys" element={<AdminApiKeysPage />} />
         </Routes>
       </main>
       {!isAdminRoute && <Footer />}

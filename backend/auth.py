@@ -55,7 +55,12 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
     if email is None:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     
-    return {"email": email, "user_id": payload.get("user_id"), "tier": payload.get("tier", "free")}
+    return {
+        "email": email, 
+        "user_id": payload.get("user_id"), 
+        "tier": payload.get("tier", "free"),
+        "role": payload.get("role", "user")
+    }
 
 async def get_current_user_optional(authorization: Optional[str] = Header(None)):
     """Get current user from JWT token (optional - returns None if not authenticated)"""
@@ -75,6 +80,11 @@ async def get_current_user_optional(authorization: Optional[str] = Header(None))
         if email is None:
             return None
         
-        return {"email": email, "user_id": payload.get("user_id"), "tier": payload.get("tier", "free")}
+        return {
+            "email": email, 
+            "user_id": payload.get("user_id"), 
+            "tier": payload.get("tier", "free"),
+            "role": payload.get("role", "user")
+        }
     except:
         return None
