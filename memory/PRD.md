@@ -104,39 +104,34 @@ Trebuie inclus un sistem de abonamente cu limitări de date și plăți. Baza de
 
 #### Completed Features:
 1. **Local MongoDB for Fast Reads** ✅
-   - Docker Compose configuration for MongoDB local + sync service
-   - 64GB RAM optimized setup (32GB WiredTiger cache)
-   - Fallback automat la cloud dacă local DB este down
+   - Aplicația rulează ÎNTOTDEAUNA pe MongoDB local
+   - Cloud-ul este folosit DOAR ca sursă pentru sincronizare
+   - 1.2M firme + 413K bilanțuri sincronizate cu succes
 
-2. **Sync Service** ✅
-   - Real-time sync via MongoDB Change Streams
-   - Manual full sync triggered din Admin panel
-   - Support pentru colecții: firme, bilanturi, caen_codes, postal_codes, localities
-   - Progress tracking și logging
-   - **NEW: Dynamic Cloud URL injection** - Admin can set Cloud MongoDB URL from UI
+2. **Direct Sync în Backend** ✅ (NEW)
+   - Endpoint `/api/admin/sync/direct-sync` pentru sincronizare directă
+   - Nu mai necesită sync-service separat
+   - Progress bar în timp real cu procentaj
+   - Sync în background cu BackgroundTasks
+   - ~50K documente/secundă viteza de sync
 
 3. **Admin Sync Dashboard** ✅
-   - Pagină dedicată `/admin/sync` cu AdminLayout (sidebar vizibil)
-   - Toggle între modul LOCAL și CLOUD
-   - **NEW: Input câmp pentru Cloud MongoDB URL** (password field cu show/hide toggle)
-   - Buton "Sync Complet" pentru sincronizare manuală
-   - Statistici per colecție (documente, dimensiune, indexuri)
-   - Status sync service în timp real
+   - Pagină dedicată `/admin/sync` cu AdminLayout
+   - Afișare progress în timp real cu progress bar
+   - Statistici per colecție (documente, ultima sincronizare)
+   - Butoane: Sync Complet, Sync Firme, Sync Bilanțuri
 
-4. **New Files Created:**
-   - `/app/docker-compose.production.yml` - Production Docker config
-   - `/app/sync-service/` - Sync service complet (Python)
-   - `/app/backend/routes/admin_sync_routes.py` - API endpoints sync
-   - `/app/frontend/src/pages/AdminSyncPage.js` - Admin UI
-
-5. **Architecture:**
+4. **Architecture:**
 ```
-Docker Compose Production:
-├── mongodb-local (port 27017, 32GB cache)
-├── sync-service (Change Streams + manual sync)
-├── backend (FastAPI, dual DB support)
-├── frontend (React/Nginx)
-└── redis (cache, 2GB)
+Backend (FastAPI):
+├── database.py (local + cloud connections)
+├── routes/admin_sync_routes.py (direct sync logic)
+└── All reads from local MongoDB
+
+MongoDB:
+├── mfirme_local (1.2M firme, 413K bilanturi) - PRIMARY
+├── mfirme_app (users, settings)
+└── Cloud Atlas (sync source only)
 ```
 
 ## Database Schema

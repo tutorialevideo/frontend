@@ -44,11 +44,14 @@ const AdminSyncPage = () => {
         const data = await res.json();
         setSyncStatus(data);
         setError(null);
+        return data;
       } else {
         setError('Failed to fetch sync status');
+        return null;
       }
     } catch (err) {
       setError(err.message);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -81,39 +84,36 @@ const AdminSyncPage = () => {
   };
 
   const triggerFullSync = async () => {
-    if (!mongoConfig.cloudUrl) {
-      alert('Te rog introdu URL-ul MongoDB Cloud pentru a sincroniza!');
-      return;
-    }
-    
     if (!window.confirm('Aceasta va sincroniza toate colecțiile (~1.2M firme). Poate dura 10-30 minute. Continui?')) {
       return;
     }
 
     setSyncing(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/sync/trigger-full`, {
+      const res = await fetch(`${API_URL}/api/admin/sync/direct-sync`, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          cloud_url: mongoConfig.cloudUrl
-        })
+        }
       });
 
       if (res.ok) {
         // Start polling for status
         const pollInterval = setInterval(async () => {
-          await fetchSyncStatus();
-        }, 3000);
+          const status = await fetchSyncStatus();
+          // Stop polling when sync is done
+          if (status && !status.sync_state?.is_running) {
+            clearInterval(pollInterval);
+            setSyncing(false);
+          }
+        }, 2000);
 
-        // Stop polling after 30 minutes max
+        // Stop polling after 60 minutes max
         setTimeout(() => {
           clearInterval(pollInterval);
           setSyncing(false);
-        }, 30 * 60 * 1000);
+        }, 60 * 60 * 1000);
       } else {
         const data = await res.json();
         alert(data.detail || 'Sync failed to start');
@@ -126,33 +126,37 @@ const AdminSyncPage = () => {
   };
 
   const triggerCollectionSync = async (collection) => {
-    if (!mongoConfig.cloudUrl) {
-      alert('Te rog introdu URL-ul MongoDB Cloud pentru a sincroniza!');
-      return;
-    }
-    
     setSyncing(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/sync/trigger-collection/${collection}`, {
+      const res = await fetch(`${API_URL}/api/admin/sync/direct-sync?collection=${collection}`, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          cloud_url: mongoConfig.cloudUrl
-        })
+        }
       });
 
       if (res.ok) {
-        fetchSyncStatus();
+        // Start polling for status
+        const pollInterval = setInterval(async () => {
+          const status = await fetchSyncStatus();
+          if (status && !status.sync_state?.is_running) {
+            clearInterval(pollInterval);
+            setSyncing(false);
+          }
+        }, 2000);
+
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          setSyncing(false);
+        }, 60 * 60 * 1000);
       } else {
         const data = await res.json();
         alert(data.detail || 'Sync failed');
+        setSyncing(false);
       }
     } catch (err) {
       alert('Error: ' + err.message);
-    } finally {
       setSyncing(false);
     }
   };
@@ -168,7 +172,7 @@ const AdminSyncPage = () => {
 
   const localDb = syncStatus?.local_db || {};
   const cloudCounts = syncStatus?.cloud_counts || {};
-  const syncService = syncStatus?.sync_service || {};
+  const syncState = syncStatus?.sync_state || {};
 
   return (
     <AdminLayout>
@@ -391,7 +395,7 @@ const AdminSyncPage = () => {
 
             <button
               onClick={() => triggerCollectionSync('firme')}
-              disabled={syncing || !mongoConfig.cloudUrl}
+              disabled={syncing || syncState.is_running}
               className="px-4 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50"
             >
               Sync Firme
@@ -399,68 +403,80 @@ const AdminSyncPage = () => {
 
             <button
               onClick={() => triggerCollectionSync('bilanturi')}
-              disabled={syncing || !mongoConfig.cloudUrl}
+              disabled={syncing || syncState.is_running}
               className="px-4 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50"
             >
               Sync Bilanțuri
             </button>
           </div>
 
-          {syncing && (
+          {/* Sync Progress */}
+          {(syncing || syncState.is_running) && (
             <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mb-3">
                 <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                 <div>
-                  <p className="font-medium text-blue-800">Sincronizare în curs...</p>
+                  <p className="font-medium text-blue-800">
+                    Sincronizare în curs: {syncState.current_collection || '...'}
+                  </p>
                   <p className="text-sm text-blue-600">
-                    Aceasta poate dura câteva minute. Pagina se actualizează automat.
+                    {formatNumber(syncState.synced)} / {formatNumber(syncState.total)} documente ({syncState.progress}%)
                   </p>
                 </div>
               </div>
+              
+              {/* Progress bar */}
+              <div className="w-full bg-blue-200 rounded-full h-3">
+                <div 
+                  className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${syncState.progress || 0}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Last Sync Info */}
+          {syncState.last_sync && !syncState.is_running && (
+            <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-green-700 text-sm">
+              <CheckCircle className="w-4 h-4 inline mr-2" />
+              Ultima sincronizare: {formatDate(syncState.last_sync)}
             </div>
           )}
         </div>
 
-        {/* Sync Service Status */}
+        {/* Sync Status Details */}
         <div className="bg-card border border-border rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Server className="w-5 h-5" />
-            Sync Service Status
+            Status Sincronizare
           </h3>
 
-          {syncService.error ? (
-            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-600">
-              <AlertCircle className="w-4 h-4 inline mr-2" />
-              Sync service indisponibil: {syncService.error}
+          <div className="grid md:grid-cols-3 gap-4 mb-4">
+            <div className="p-4 bg-secondary/50 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">Status</p>
+              <p className="font-medium capitalize">{syncState.status || 'idle'}</p>
             </div>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="p-4 bg-secondary/50 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Status</p>
-                <p className="font-medium capitalize">{syncService.status || 'Unknown'}</p>
-              </div>
-              <div className="p-4 bg-secondary/50 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Running</p>
-                <p className="font-medium">{syncService.is_running ? 'Da' : 'Nu'}</p>
-              </div>
-              <div className="p-4 bg-secondary/50 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Last Check</p>
-                <p className="font-medium">{formatDate(syncService.last_check)}</p>
-              </div>
+            <div className="p-4 bg-secondary/50 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">În curs</p>
+              <p className="font-medium">{syncState.is_running ? 'Da' : 'Nu'}</p>
             </div>
-          )}
+            <div className="p-4 bg-secondary/50 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">Cloud conectat</p>
+              <p className="font-medium">{syncStatus?.cloud_connected ? 'Da ✓' : 'Nu'}</p>
+            </div>
+          </div>
 
           {/* Collection sync status */}
-          {syncService.collections && Object.keys(syncService.collections).length > 0 && (
+          {syncState.collections_status && Object.keys(syncState.collections_status).length > 0 && (
             <div className="mt-4">
               <h4 className="text-sm font-medium text-muted-foreground mb-2">Colecții sincronizate:</h4>
               <div className="space-y-2">
-                {Object.entries(syncService.collections).map(([name, info]) => (
+                {Object.entries(syncState.collections_status).map(([name, info]) => (
                   <div key={name} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
                     <span className="font-medium capitalize">{name}</span>
                     <div className="flex items-center gap-4 text-sm">
                       <span className="text-muted-foreground">
-                        {formatNumber(info.documents_count || 0)} docs
+                        {formatNumber(info.documents || 0)} docs
                       </span>
                       <span className={`px-2 py-0.5 rounded text-xs ${
                         info.status === 'synced' ? 'bg-green-500/10 text-green-600' :
@@ -474,6 +490,18 @@ const AdminSyncPage = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Errors */}
+          {syncState.errors && syncState.errors.length > 0 && (
+            <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <h4 className="text-sm font-medium text-red-700 mb-2">Erori recente:</h4>
+              {syncState.errors.map((err, i) => (
+                <p key={i} className="text-sm text-red-600">
+                  {err.collection}: {err.error}
+                </p>
+              ))}
             </div>
           )}
         </div>
