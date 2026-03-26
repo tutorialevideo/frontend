@@ -11,7 +11,6 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_local_data:/data/db
-      - ./mongodb-init:/docker-entrypoint-initdb.d:ro
     networks:
       - mfirme_network
     healthcheck:
@@ -32,6 +31,8 @@ services:
       context: ./sync-service
       dockerfile: Dockerfile
     container_name: mfirme_sync_service
+    env_file:
+      - .env
     environment:
       - MONGO_CLOUD_URL=${MONGO_URL}
       - MONGO_LOCAL_URL=mongodb://mongodb-local:27017/mfirme_local
@@ -45,6 +46,8 @@ services:
     restart: unless-stopped
     volumes:
       - sync_logs:/app/logs
+    ports:
+      - "8002:8002"
 
   # Backend FastAPI
   backend:
@@ -52,13 +55,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: mfirme_backend
+    env_file:
+      - .env
     environment:
-      - MONGO_URL=${MONGO_URL}
-      - APP_MONGO_URL=${APP_MONGO_URL}
       - MONGO_LOCAL_URL=mongodb://mongodb-local:27017/mfirme_local
       - USE_LOCAL_DB=true
-      - SECRET_KEY=${SECRET_KEY}
-      - STRIPE_API_KEY=${STRIPE_API_KEY}
+      - SYNC_SERVICE_URL=http://sync-service:8002
     ports:
       - "8001:8001"
     depends_on:
@@ -75,6 +77,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - REACT_APP_BACKEND_URL=
     container_name: mfirme_frontend
     ports:
       - "3000:80"
