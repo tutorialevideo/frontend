@@ -9,8 +9,6 @@ import {
   Clock,
   Server,
   Loader2,
-  ToggleLeft,
-  ToggleRight,
   ArrowDownToLine,
   Save,
   Eye,
@@ -159,24 +157,6 @@ const AdminSyncPage = () => {
     }
   };
 
-  const switchDatabaseMode = async (useLocal) => {
-    try {
-      const res = await fetch(`${API_URL}/api/admin/sync/switch-mode?use_local=${useLocal}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (res.ok) {
-        fetchSyncStatus();
-      } else {
-        const data = await res.json();
-        alert(data.message || 'Switch failed');
-      }
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  };
-
   const formatNumber = (num) => {
     return num?.toLocaleString('ro-RO') || '0';
   };
@@ -186,7 +166,6 @@ const AdminSyncPage = () => {
     return new Date(dateStr).toLocaleString('ro-RO');
   };
 
-  const isUsingLocal = syncStatus?.mode === 'local';
   const localDb = syncStatus?.local_db || {};
   const cloudCounts = syncStatus?.cloud_counts || {};
   const syncService = syncStatus?.sync_service || {};
@@ -287,46 +266,27 @@ const AdminSyncPage = () => {
           </div>
         </div>
 
-        {/* Database Mode Toggle */}
+        {/* Database Mode Info - Always LOCAL */}
         <div className="bg-card border border-border rounded-xl p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${isUsingLocal ? 'bg-green-500/10' : 'bg-blue-500/10'}`}>
-                {isUsingLocal ? (
-                  <HardDrive className="w-8 h-8 text-green-600" />
-                ) : (
-                  <Cloud className="w-8 h-8 text-blue-600" />
-                )}
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">
-                  Mod curent: {isUsingLocal ? 'LOCAL' : 'CLOUD'}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {isUsingLocal 
-                    ? 'Citirile se fac din MongoDB local (rapid)' 
-                    : 'Citirile se fac din MongoDB Atlas (cloud)'}
-                </p>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-green-500/10">
+              <HardDrive className="w-8 h-8 text-green-600" />
             </div>
-            
-            <button
-              onClick={() => switchDatabaseMode(!isUsingLocal)}
-              disabled={!localDb.available && !isUsingLocal}
-              className="flex items-center gap-2"
-            >
-              {isUsingLocal ? (
-                <ToggleRight className="w-12 h-12 text-green-500" />
-              ) : (
-                <ToggleLeft className="w-12 h-12 text-muted-foreground" />
-              )}
-            </button>
+            <div>
+              <h3 className="text-lg font-semibold">
+                Mod: LOCAL (MongoDB pe server)
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Aplicația rulează întotdeauna pe MongoDB local pentru viteză maximă.
+                Cloud-ul este folosit doar ca sursă pentru sincronizare.
+              </p>
+            </div>
           </div>
 
-          {!localDb.available && (
+          {localDb.total_documents === 0 && (
             <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-700 text-sm">
               <AlertCircle className="w-4 h-4 inline mr-2" />
-              Baza de date locală nu este disponibilă sau nu are date. Rulează un sync complet mai întâi.
+              Baza de date locală este goală. Introdu URL-ul Cloud și rulează un sync complet pentru a popula datele.
             </div>
           )}
         </div>
@@ -385,18 +345,9 @@ const AdminSyncPage = () => {
                 ))}
                 <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">Status</span>
-                  <span className={`flex items-center gap-1 ${isUsingLocal ? 'text-green-600' : 'text-amber-600'}`}>
-                    {isUsingLocal ? (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Active
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="w-4 h-4" />
-                        Standby
-                      </>
-                    )}
+                  <span className="flex items-center gap-1 text-green-600">
+                    <CheckCircle className="w-4 h-4" />
+                    Active
                   </span>
                 </div>
               </div>

@@ -9,7 +9,7 @@ from typing import Optional
 import httpx
 import os
 from auth import get_current_user
-from database import get_app_db, get_local_db, is_using_local_db, check_local_db_health, force_use_local
+from database import get_app_db, get_local_db, get_cloud_db, is_using_local_db, check_local_db_health
 
 router = APIRouter(prefix="/api/admin/sync", tags=["admin-sync"])
 
@@ -36,9 +36,9 @@ async def verify_admin(current_user = Depends(get_current_user)):
 async def get_sync_status(admin_user = Depends(verify_admin)):
     """
     Get comprehensive sync status
-    - Local DB availability
-    - Collection counts (local vs cloud)
-    - Last sync timestamps
+    - Local DB availability and counts
+    - Cloud DB counts for comparison
+    - Sync service status
     """
     # Get local DB health
     local_health = await check_local_db_health()
@@ -54,17 +54,17 @@ async def get_sync_status(admin_user = Depends(verify_admin)):
         sync_service_status = {"error": str(e), "status": "unreachable"}
     
     # Get cloud counts for comparison
-    from database import cloud_companies_db
+    cloud_db = get_cloud_db()
     cloud_counts = {}
-    if cloud_companies_db is not None:
+    if cloud_db is not None:
         try:
             for col in ['firme', 'bilanturi']:
-                cloud_counts[col] = await cloud_companies_db[col].estimated_document_count()
+                cloud_counts[col] = await cloud_db[col].estimated_document_count()
         except:
             pass
     
     return {
-        "mode": "local" if is_using_local_db() else "cloud",
+        "mode": "local",  # Always local now
         "local_db": local_health,
         "cloud_counts": cloud_counts,
         "sync_service": sync_service_status
@@ -166,32 +166,6 @@ async def trigger_collection_sync(
             status_code=503,
             detail=f"Sync service unavailable: {str(e)}"
         )
-
-
-@router.post("/switch-mode")
-async def switch_database_mode(
-    use_local: bool,
-    admin_user = Depends(verify_admin)
-):
-    """
-    Switch between local and cloud database for reads.
-    Local DB must have data to be used.
-    """
-    result = await force_use_local(use_local)
-    
-    # Log the action
-    app_db = get_app_db()
-    if app_db is not None:
-        from datetime import datetime, timezone
-        await app_db.audit_logs.insert_one({
-            "admin_id": admin_user["_id"],
-            "admin_email": admin_user.get("email"),
-            "action": "switch_database_mode",
-            "details": {"use_local": use_local, "result": result},
-            "created_at": datetime.now(timezone.utc)
-        })
-    
-    return result
 
 
 @router.get("/health")
