@@ -13,7 +13,7 @@ const FinancialChart = ({ cui }) => {
 
   const loadFinancialData = async () => {
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       const res = await fetch(`${API_URL}/api/company/${cui}/financials`);
       
       if (res.ok) {

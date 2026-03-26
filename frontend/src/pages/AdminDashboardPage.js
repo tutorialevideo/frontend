@@ -24,7 +24,7 @@ const AdminDashboardPage = () => {
 
   const loadAdminData = async () => {
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       
       const [statsRes, settingsRes, creditsStatsRes] = await Promise.all([
         fetch(`${API_URL}/api/admin/stats`, {
@@ -66,7 +66,7 @@ const AdminDashboardPage = () => {
   const toggleCreditsSystem = async () => {
     setTogglingCredits(true);
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       const res = await fetch(`${API_URL}/api/admin/settings/credits-system/toggle`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }

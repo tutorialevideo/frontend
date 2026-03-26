@@ -16,7 +16,7 @@ const AdminCompaniesPage = () => {
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+  const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
   // Load initial companies on mount
   React.useEffect(() => {

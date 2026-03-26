@@ -50,7 +50,7 @@ const CompanyPage = () => {
     if (!token || !company) return;
     
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       const res = await fetch(`${API_URL}/api/user/favorites`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -72,7 +72,7 @@ const CompanyPage = () => {
     }
 
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       const method = isFavorite ? 'DELETE' : 'POST';
       
       const res = await fetch(`${API_URL}/api/user/favorites/${company.cui}`, {

@@ -16,7 +16,7 @@ const AdminAuditPage = () => {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState(null);
 
-  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+  const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
   useEffect(() => {
     loadLogs();

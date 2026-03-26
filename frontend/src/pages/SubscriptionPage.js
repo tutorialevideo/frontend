@@ -24,7 +24,7 @@ const SubscriptionPage = () => {
 
   const loadPlans = async () => {
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       const res = await fetch(`${API_URL}/api/subscriptions/plans`);
       
       if (res.ok) {
@@ -41,7 +41,7 @@ const SubscriptionPage = () => {
   const checkPaymentStatus = async (sessionId) => {
     setCheckingPayment(true);
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       const res = await fetch(`${API_URL}/api/subscriptions/status/${sessionId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -71,7 +71,7 @@ const SubscriptionPage = () => {
     if (planId === 'free') return;
 
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       const origin = window.location.origin;
       
       const res = await fetch(`${API_URL}/api/subscriptions/checkout`, {

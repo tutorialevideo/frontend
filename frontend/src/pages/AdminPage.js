@@ -23,7 +23,7 @@ const AdminPage = () => {
 
   const loadAdminData = async () => {
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       
       // Load stats
       const statsRes = await fetch(`${API_URL}/api/admin/stats`, {

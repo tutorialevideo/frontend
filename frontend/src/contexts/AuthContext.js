@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchCurrentUser = async () => {
     try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const API_URL = process.env.REACT_APP_BACKEND_URL || '';
       const res = await fetch(`${API_URL}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+    const API_URL = process.env.REACT_APP_BACKEND_URL || '';
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -65,13 +65,13 @@ export const AuthProvider = ({ children }) => {
     setToken(data.access_token);
     setUser(data.user);
     localStorage.setItem('token', data.access_token);
-    localStorage.setItem('user', JSON.stringify(data.user));  // Save user to localStorage
+    localStorage.setItem('user', JSON.stringify(data.user));
     
     return data;
   };
 
   const register = async (email, password, name) => {
-    const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+    const API_URL = process.env.REACT_APP_BACKEND_URL || '';
     const res = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     setToken(data.access_token);
     setUser(data.user);
     localStorage.setItem('token', data.access_token);
-    localStorage.setItem('user', JSON.stringify(data.user));  // Save user to localStorage
+    localStorage.setItem('user', JSON.stringify(data.user));
     
     return data;
   };

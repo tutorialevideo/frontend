@@ -20,7 +20,7 @@ const AdminUsersPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
 
-  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+  const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
   useEffect(() => {
     loadUsers();
