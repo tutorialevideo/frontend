@@ -3,7 +3,8 @@ Admin Sync Routes
 Endpoints pentru controlul sincronizării MongoDB local/cloud
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
+from pydantic import BaseModel
 from typing import Optional
 import httpx
 import os
@@ -14,6 +15,10 @@ router = APIRouter(prefix="/api/admin/sync", tags=["admin-sync"])
 
 # Sync service URL (Docker internal)
 SYNC_SERVICE_URL = os.getenv("SYNC_SERVICE_URL", "http://sync-service:8002")
+
+
+class SyncRequest(BaseModel):
+    cloud_url: Optional[str] = None
 
 
 async def verify_admin(current_user = Depends(get_current_user)):
@@ -67,14 +72,33 @@ async def get_sync_status(admin_user = Depends(verify_admin)):
 
 
 @router.post("/trigger-full")
-async def trigger_full_sync(admin_user = Depends(verify_admin)):
+async def trigger_full_sync(
+    request: Request,
+    admin_user = Depends(verify_admin)
+):
     """
     Trigger full sync of all collections from cloud to local
     This runs in background and may take several minutes for 1.2M+ records
     """
+    # Parse request body for cloud_url
+    cloud_url = None
+    try:
+        body = await request.json()
+        cloud_url = body.get("cloud_url")
+    except:
+        pass
+    
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(f"{SYNC_SERVICE_URL}/sync/full")
+            # Pass cloud_url to sync service
+            payload = {}
+            if cloud_url:
+                payload["cloud_url"] = cloud_url
+                
+            response = await client.post(
+                f"{SYNC_SERVICE_URL}/sync/full",
+                json=payload
+            )
             
             if response.status_code == 200:
                 return {
@@ -96,6 +120,7 @@ async def trigger_full_sync(admin_user = Depends(verify_admin)):
 @router.post("/trigger-collection/{collection_name}")
 async def trigger_collection_sync(
     collection_name: str,
+    request: Request,
     admin_user = Depends(verify_admin)
 ):
     """Trigger sync for a specific collection"""
@@ -107,9 +132,24 @@ async def trigger_collection_sync(
             detail=f"Invalid collection. Allowed: {allowed_collections}"
         )
     
+    # Parse request body for cloud_url
+    cloud_url = None
+    try:
+        body = await request.json()
+        cloud_url = body.get("cloud_url")
+    except:
+        pass
+    
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(f"{SYNC_SERVICE_URL}/sync/collection/{collection_name}")
+            payload = {}
+            if cloud_url:
+                payload["cloud_url"] = cloud_url
+                
+            response = await client.post(
+                f"{SYNC_SERVICE_URL}/sync/collection/{collection_name}",
+                json=payload
+            )
             
             if response.status_code == 200:
                 return {

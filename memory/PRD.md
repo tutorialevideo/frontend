@@ -113,10 +113,12 @@ Trebuie inclus un sistem de abonamente cu limitări de date și plăți. Baza de
    - Manual full sync triggered din Admin panel
    - Support pentru colecții: firme, bilanturi, caen_codes, postal_codes, localities
    - Progress tracking și logging
+   - **NEW: Dynamic Cloud URL injection** - Admin can set Cloud MongoDB URL from UI
 
 3. **Admin Sync Dashboard** ✅
-   - Pagină dedicată `/admin/sync`
+   - Pagină dedicată `/admin/sync` cu AdminLayout (sidebar vizibil)
    - Toggle între modul LOCAL și CLOUD
+   - **NEW: Input câmp pentru Cloud MongoDB URL** (password field cu show/hide toggle)
    - Buton "Sync Complet" pentru sincronizare manuală
    - Statistici per colecție (documente, dimensiune, indexuri)
    - Status sync service în timp real
@@ -260,3 +262,5 @@ Docker Compose Production:
 5. User speaks Romanian - keep UI text in Romanian
 6. CAEN lookup: strip to 4 digits and query `caen_codes.cod`
 7. PyMongo warning: Never use `if db:` - use `if db is not None:` to avoid NotImplementedError
+8. **Sync Service**: The `set_cloud_url` method in `/app/sync-service/sync_service.py` allows dynamic Cloud MongoDB URL updates from Admin UI
+9. **Environment**: In preview environment, MongoDB local is used via `mongodb://localhost:27017/`. For production Docker, use `mongodb://mongodb-local:27017/`

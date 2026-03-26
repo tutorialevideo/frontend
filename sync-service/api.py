@@ -3,8 +3,10 @@ Sync Service API
 Expune endpoint-uri pentru controlul sincronizării din Admin panel
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional
 from sync_service import sync_service
 import uvicorn
 
@@ -18,6 +20,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class SyncRequest(BaseModel):
+    cloud_url: Optional[str] = None
 
 
 @app.on_event("startup")
@@ -45,10 +51,22 @@ async def get_sync_status():
 
 
 @app.post("/sync/full")
-async def trigger_full_sync(background_tasks: BackgroundTasks):
+async def trigger_full_sync(background_tasks: BackgroundTasks, request: Request = None):
     """Trigger full sync of all collections (runs in background)"""
     if sync_service.is_running:
         raise HTTPException(status_code=409, detail="Sync already in progress")
+    
+    # Get cloud_url from request if provided
+    cloud_url = None
+    try:
+        body = await request.json()
+        cloud_url = body.get("cloud_url")
+    except:
+        pass
+    
+    # Update cloud URL if provided
+    if cloud_url:
+        await sync_service.set_cloud_url(cloud_url)
     
     background_tasks.add_task(sync_service.full_sync_all)
     
@@ -60,10 +78,26 @@ async def trigger_full_sync(background_tasks: BackgroundTasks):
 
 
 @app.post("/sync/collection/{collection_name}")
-async def trigger_collection_sync(collection_name: str, background_tasks: BackgroundTasks):
+async def trigger_collection_sync(
+    collection_name: str, 
+    background_tasks: BackgroundTasks,
+    request: Request = None
+):
     """Trigger sync for a specific collection"""
     if sync_service.is_running:
         raise HTTPException(status_code=409, detail="Sync already in progress")
+    
+    # Get cloud_url from request if provided
+    cloud_url = None
+    try:
+        body = await request.json()
+        cloud_url = body.get("cloud_url")
+    except:
+        pass
+    
+    # Update cloud URL if provided
+    if cloud_url:
+        await sync_service.set_cloud_url(cloud_url)
     
     background_tasks.add_task(sync_service.full_sync_collection, collection_name)
     
@@ -71,6 +105,16 @@ async def trigger_collection_sync(collection_name: str, background_tasks: Backgr
         "status": "started",
         "message": f"Sync started for collection: {collection_name}"
     }
+
+
+@app.post("/config/cloud-url")
+async def set_cloud_url(request: SyncRequest):
+    """Set the cloud MongoDB URL"""
+    if not request.cloud_url:
+        raise HTTPException(status_code=400, detail="cloud_url is required")
+    
+    await sync_service.set_cloud_url(request.cloud_url)
+    return {"status": "ok", "message": "Cloud URL updated"}
 
 
 @app.get("/stats")

@@ -82,6 +82,52 @@ class SyncService:
             self.local_client.close()
         logger.info("Database connections closed")
     
+    async def set_cloud_url(self, cloud_url: str) -> bool:
+        """
+        Set or update the Cloud MongoDB URL dynamically.
+        Closes existing cloud connection and establishes a new one.
+        """
+        global MONGO_CLOUD_URL
+        
+        if not cloud_url:
+            logger.error("Cloud URL is empty")
+            return False
+        
+        logger.info("Updating Cloud MongoDB connection...")
+        
+        try:
+            # Close existing cloud connection if any
+            if self.cloud_client:
+                try:
+                    self.cloud_client.close()
+                    logger.info("Closed existing cloud connection")
+                except Exception as e:
+                    logger.warning(f"Error closing old cloud connection: {e}")
+            
+            # Create new client with provided URL
+            self.cloud_client = AsyncIOMotorClient(
+                cloud_url,
+                serverSelectionTimeoutMS=10000,  # 10 second timeout
+                connectTimeoutMS=10000
+            )
+            self.cloud_db = self.cloud_client[CLOUD_DB_NAME]
+            
+            # Test the new connection
+            await self.cloud_db.command('ping')
+            
+            # Update global config
+            MONGO_CLOUD_URL = cloud_url
+            
+            logger.info("✓ Successfully connected to new Cloud MongoDB")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to connect to new Cloud MongoDB: {e}")
+            # Reset to None on failure
+            self.cloud_client = None
+            self.cloud_db = None
+            raise Exception(f"Cloud connection failed: {str(e)}")
+    
     async def get_sync_status(self) -> Dict[str, Any]:
         """Get current sync status"""
         try:
