@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
-import { Building2, MapPin, Phone, Calendar, TrendingUp, Users, Briefcase, Lock, Heart } from 'lucide-react';
+import { Building2, MapPin, Phone, Calendar, TrendingUp, Users, Briefcase, Lock, Heart, FileText, DollarSign, Activity } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCredits } from '../contexts/CreditsContext';
 import api from '../services/api';
@@ -11,7 +11,6 @@ const CompanyPage = () => {
   const { slug } = useParams();
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
   const [isFavorite, setIsFavorite] = useState(false);
   const { user, isAuthenticated, token } = useAuth();
   const { consumeCredit, systemEnabled } = useCredits();
@@ -22,11 +21,9 @@ const CompanyPage = () => {
     if (isAuthenticated) {
       checkIfFavorite();
     }
-    // Reset credit consumed flag when slug changes
     creditConsumedRef.current = false;
   }, [slug, isAuthenticated]);
 
-  // Consume credit after company is loaded
   useEffect(() => {
     if (company && isAuthenticated && systemEnabled && !creditConsumedRef.current) {
       creditConsumedRef.current = true;
@@ -48,404 +45,357 @@ const CompanyPage = () => {
 
   const checkIfFavorite = async () => {
     if (!token || !company) return;
-    
     try {
       const API_URL = process.env.REACT_APP_BACKEND_URL || '';
-      const res = await fetch(`${API_URL}/api/user/favorites`, {
+      const res = await fetch(`${API_URL}/api/favorites/check/${company.cui}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
       if (res.ok) {
         const data = await res.json();
-        const isFav = data.favorites.some(f => f.company_id === company.cui);
-        setIsFavorite(isFav);
+        setIsFavorite(data.is_favorite);
       }
-    } catch (error) {
-      console.error('Failed to check favorite:', error);
+    } catch (err) {
+      console.error('Failed to check favorite:', err);
     }
   };
 
   const toggleFavorite = async () => {
-    if (!isAuthenticated) {
-      alert('Trebuie să fii autentificat pentru a adăuga favorite');
-      return;
-    }
-
+    if (!token) return;
     try {
       const API_URL = process.env.REACT_APP_BACKEND_URL || '';
-      const method = isFavorite ? 'DELETE' : 'POST';
-      
-      const res = await fetch(`${API_URL}/api/user/favorites/${company.cui}`, {
-        method,
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (res.ok) {
-        setIsFavorite(!isFavorite);
+      if (isFavorite) {
+        await fetch(`${API_URL}/api/favorites/remove/${company.cui}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } else {
+        await fetch(`${API_URL}/api/favorites/add`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ cui: company.cui, denumire: company.denumire })
+        });
       }
-    } catch (error) {
-      console.error('Failed to toggle favorite:', error);
+      setIsFavorite(!isFavorite);
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
     }
   };
 
+  const isPhoneMasked = company?.anaf_telefon?.includes('***');
+
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center text-muted-foreground">Se încarcă...</div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!company) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <Building2 className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-          <h2 className="text-xl font-semibold mb-2">Compania nu a fost găsită</h2>
-          <Link to="/search" className="text-primary hover:underline">
-            Înapoi la căutare
-          </Link>
-        </div>
+      <div className="text-center py-20">
+        <Building2 className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+        <h1 className="text-2xl font-semibold mb-2">Firma nu a fost găsită</h1>
+        <p className="text-muted-foreground mb-6">Verifică URL-ul sau caută altă firmă</p>
+        <Link to="/search" className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg">
+          Caută firme
+        </Link>
       </div>
     );
   }
 
-  const isPhoneMasked = company.anaf_telefon && company.anaf_telefon.includes('***');
+  const pageTitle = company.denumire ? `${company.denumire} - CUI ${company.cui} | mFirme` : 'Profil Firmă | mFirme';
 
   return (
     <>
       <Helmet>
-        <title>{company?.denumire ? `${company.denumire} - CUI ${company.cui} | mFirme` : 'Companie | mFirme'}</title>
-        <meta 
-          name="description" 
-          content={company ? `Informații complete despre ${company.denumire}, CUI ${company.cui}, ${company.localitate}, ${company.judet}. Date financiare, juridice și de contact.` : 'Informații complete despre companie'}
-        />
+        <title>{pageTitle}</title>
+        <meta name="description" content={`${company.denumire || 'Firmă'} din ${company.localitate || ''}, ${company.judet || ''}. CUI: ${company.cui || ''}. Date financiare, contact și informații complete.`} />
       </Helmet>
 
-      <div className="bg-secondary/30 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <nav className="text-xs text-muted-foreground mb-4">
-            <Link to="/" className="hover:text-foreground">Acasă</Link>
-            {company && (
-              <>
-                <span className="mx-2">/</span>
-                <Link to={`/judet/${company.judet}`} className="hover:text-foreground">{company.judet}</Link>
-                <span className="mx-2">/</span>
-                <span className="text-foreground">{company.denumire}</span>
-              </>
-            )}
-          </nav>
-
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="bg-card border border-border rounded-xl p-6" data-testid="company-header">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3" data-testid="company-name">
-                {company.denumire}
-              </h1>
-              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center space-x-1">
-                  <Building2 className="w-4 h-4" />
-                  <span>CUI: {company.cui}</span>
-                </div>
-                <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-3 mb-2">
+                <Building2 className="w-8 h-8 text-primary" />
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight" data-testid="company-name">
+                  {company.denumire}
+                </h1>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
+                <span className="font-mono" data-testid="company-cui">CUI: {company.cui}</span>
+                <span className="flex items-center space-x-1">
                   <MapPin className="w-4 h-4" />
-                  <span>{company.localitate}, {company.judet}</span>
-                  {company.cod_postal && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded">
-                      {company.cod_postal}
-                    </span>
-                  )}
-                </div>
+                  <span data-testid="company-location">{company.localitate}, {company.judet}</span>
+                </span>
+                {company.anaf_data_inregistrare && (
+                  <span className="flex items-center space-x-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>Din {company.anaf_data_inregistrare}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Status badges */}
+              <div className="flex flex-wrap gap-2">
+                {company.anaf_stare_startswith_inregistrat && (
+                  <span className="px-3 py-1 bg-green-500/10 text-green-700 text-xs font-medium rounded-full">
+                    Activ ANAF
+                  </span>
+                )}
+                {(company.anaf_platitor_tva || company.mf_platitor_tva) && (
+                  <span className="px-3 py-1 bg-blue-500/10 text-blue-700 text-xs font-medium rounded-full">
+                    Plătitor TVA
+                  </span>
+                )}
+                {company.mf_an_bilant && (
+                  <span className="px-3 py-1 bg-purple-500/10 text-purple-700 text-xs font-medium rounded-full">
+                    Bilanț {company.mf_an_bilant}
+                  </span>
+                )}
                 {company.forma_juridica && (
-                  <div className="flex items-center space-x-1">
-                    <Briefcase className="w-4 h-4" />
-                    <span>{company.forma_juridica}</span>
-                  </div>
+                  <span className="px-3 py-1 bg-gray-500/10 text-gray-700 text-xs font-medium rounded-full">
+                    {company.forma_juridica}
+                  </span>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              {isAuthenticated && (
-                <button
-                  onClick={toggleFavorite}
-                  className={`p-2 rounded-lg transition-colors ${
-                    isFavorite 
-                      ? 'bg-red-500/10 text-red-600 hover:bg-red-500/20' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  title={isFavorite ? 'Elimină din favorite' : 'Adaugă la favorite'}
-                >
-                  <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-                </button>
-              )}
-              
-              {company.anaf_stare && (
-                <div className="hidden md:block px-3 py-1.5 bg-green-500/10 text-green-700 text-xs font-medium rounded-lg">
-                  Activ
-                </div>
-              )}
-            </div>
+            {/* Favorite button */}
+            {isAuthenticated && (
+              <button
+                onClick={toggleFavorite}
+                className={`p-2 rounded-lg border transition-colors ${
+                  isFavorite 
+                    ? 'bg-red-50 border-red-200 text-red-500' 
+                    : 'border-border hover:bg-muted'
+                }`}
+                data-testid="favorite-button"
+              >
+                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+              </button>
+            )}
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Tabs */}
-        <div className="border-b border-border mb-6">
-          <nav className="flex space-x-8">
-            {['overview', 'financials', 'juridic'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-                data-testid={`tab-${tab}`}
-              >
-                {tab === 'overview' && 'Prezentare'}
-                {tab === 'financials' && 'Financiar'}
-                {tab === 'juridic' && 'Juridic'}
-              </button>
-            ))}
-          </nav>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-card border border-border rounded-xl p-4" data-testid="metric-revenue">
+            <div className="flex items-center space-x-2 mb-2">
+              <DollarSign className="w-5 h-5 text-green-600" />
+              <span className="text-xs text-muted-foreground">Cifra de afaceri</span>
+            </div>
+            <div className="text-xl font-semibold tracking-tight">
+              {company.mf_cifra_afaceri 
+                ? `${company.mf_cifra_afaceri.toLocaleString('ro-RO')} RON`
+                : 'N/A'}
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-4" data-testid="metric-profit">
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
+              <span className="text-xs text-muted-foreground">Profit net</span>
+            </div>
+            <div className="text-xl font-semibold tracking-tight">
+              {company.mf_profit_net 
+                ? `${company.mf_profit_net.toLocaleString('ro-RO')} RON`
+                : 'N/A'}
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-4" data-testid="metric-employees">
+            <div className="flex items-center space-x-2 mb-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              <span className="text-xs text-muted-foreground">Angajați</span>
+            </div>
+            <div className="text-xl font-semibold tracking-tight">
+              {company.mf_numar_angajati ?? 'N/A'}
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Briefcase className="w-5 h-5 text-orange-600" />
+              <span className="text-xs text-muted-foreground">Cod CAEN</span>
+            </div>
+            <div className="text-xl font-semibold tracking-tight font-mono">
+              {company.anaf_cod_caen || 'N/A'}
+            </div>
+            {company.caen_denumire && (
+              <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{company.caen_denumire}</div>
+            )}
+          </div>
         </div>
 
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Financial Chart */}
-            <FinancialChart cui={company.cui} />
-            
-            <div className="grid md:grid-cols-2 gap-6">
-            {/* Contact Info */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h3 className="text-sm font-semibold mb-4">Informații de contact</h3>
-              <dl className="space-y-3">
+        {/* Financial Chart */}
+        <FinancialChart cui={company.cui} />
+
+        {/* Main Content Grid */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Contact Info */}
+          <div className="bg-card border border-border rounded-xl p-6">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Informații de contact
+            </h3>
+            <dl className="space-y-3">
+              <div>
+                <dt className="text-xs text-muted-foreground mb-1">Adresă</dt>
+                <dd className="text-sm" data-testid="company-address">
+                  {company.anaf_adresa || (
+                    <>
+                      {company.strada && `${company.strada} ${company.numar || ''}`}
+                      {company.strada && <br />}
+                      {company.localitate}, {company.judet}
+                      {company.cod_postal && `, ${company.cod_postal}`}
+                    </>
+                  )}
+                </dd>
+              </div>
+
+              {company.anaf_telefon && (
                 <div>
-                  <dt className="text-xs text-muted-foreground mb-1">Adresă</dt>
-                  <dd className="text-sm" data-testid="company-address">
-                    {company.strada && `${company.strada} ${company.numar || ''}`}
-                    {company.strada && <br />}
-                    {company.localitate}, {company.judet}
-                    {company.cod_postal && `, ${company.cod_postal}`}
+                  <dt className="text-xs text-muted-foreground mb-1">Telefon</dt>
+                  <dd className="text-sm flex items-center space-x-2" data-testid="company-phone">
+                    <Phone className="w-4 h-4" />
+                    <span>{company.anaf_telefon}</span>
+                    {isPhoneMasked && (
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-amber-500/10 text-amber-700 text-xs rounded">
+                        <Lock className="w-3 h-3" />
+                        <span>Premium</span>
+                      </span>
+                    )}
                   </dd>
                 </div>
+              )}
 
-                {company.anaf_telefon && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground mb-1">Telefon</dt>
-                    <dd className="text-sm flex items-center space-x-2" data-testid="company-phone">
-                      <Phone className="w-4 h-4" />
-                      <span>{company.anaf_telefon}</span>
-                      {isPhoneMasked && (
-                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-amber-500/10 text-amber-700 text-xs rounded">
-                          <Lock className="w-3 h-3" />
-                          <span>Premium</span>
-                        </span>
-                      )}
-                    </dd>
-                  </div>
-                )}
-
-                {company.data_inregistrare && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground mb-1">Data înregistrare</dt>
-                    <dd className="text-sm flex items-center space-x-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>{company.data_inregistrare}</span>
-                    </dd>
-                  </div>
-                )}
-
-                {company.cod_inregistrare && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground mb-1">Număr registrul comerțului</dt>
-                    <dd className="text-sm font-mono">{company.cod_inregistrare}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-
-            {/* Business Info */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h3 className="text-sm font-semibold mb-4">Informații generale</h3>
-              <dl className="space-y-3">
-                {company.anaf_forma_juridica && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground mb-1">Formă juridică</dt>
-                    <dd className="text-sm">{company.anaf_forma_juridica}</dd>
-                  </div>
-                )}
-
-                {company.anaf_cod_caen && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground mb-1">Cod CAEN</dt>
-                    <dd className="text-sm" data-testid="company-caen">
-                      <span className="font-mono">{company.anaf_cod_caen}</span>
-                      {company.caen_denumire && (
-                        <p className="mt-1 text-muted-foreground">
-                          {company.caen_denumire}
-                        </p>
-                      )}
-                      {company.caen_sectiune && (
-                        <span className="inline-block mt-1.5 px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded">
-                          Secțiunea {company.caen_sectiune}: {company.caen_sectiune_denumire}
-                        </span>
-                      )}
-                    </dd>
-                  </div>
-                )}
-
-                {company.anaf_platitor_tva !== undefined && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground mb-1">Plătitor TVA</dt>
-                    <dd className="text-sm">
-                      {company.anaf_platitor_tva ? (
-                        <span className="text-green-600">Da</span>
-                      ) : (
-                        <span className="text-muted-foreground">Nu</span>
-                      )}
-                    </dd>
-                  </div>
-                )}
-
-                {company.anaf_stare && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground mb-1">Stare</dt>
-                    <dd className="text-sm">{company.anaf_stare}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
+              {company.anaf_fax && (
+                <div>
+                  <dt className="text-xs text-muted-foreground mb-1">Fax</dt>
+                  <dd className="text-sm">{company.anaf_fax}</dd>
+                </div>
+              )}
+            </dl>
           </div>
-          </div>
-        )}
 
-        {/* Financials Tab */}
-        {activeTab === 'financials' && (
-          <div className="space-y-6">
-            {/* Key Metrics */}
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-card border border-border rounded-xl p-6" data-testid="metric-revenue">
-                <div className="flex items-center space-x-2 mb-2">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-muted-foreground">Cifră de afaceri</span>
-                </div>
-                <div className="text-2xl font-semibold tracking-tight">
-                  {company.mf_cifra_afaceri ? `${company.mf_cifra_afaceri.toLocaleString('ro-RO')} RON` : 'N/A'}
-                </div>
-                {company.mf_an_bilant && (
-                  <div className="text-xs text-muted-foreground mt-1">An {company.mf_an_bilant}</div>
-                )}
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-6" data-testid="metric-profit">
-                <div className="flex items-center space-x-2 mb-2">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                  <span className="text-xs text-muted-foreground">Profit net</span>
-                </div>
-                <div className="text-2xl font-semibold tracking-tight">
-                  {company.mf_profit_net ? `${company.mf_profit_net.toLocaleString('ro-RO')} RON` : 'N/A'}
-                </div>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-6" data-testid="metric-employees">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  <span className="text-xs text-muted-foreground">Angajați</span>
-                </div>
-                <div className="text-2xl font-semibold tracking-tight">
-                  {company.mf_numar_angajati || 'N/A'}
-                </div>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-6">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Building2 className="w-5 h-5 text-orange-600" />
-                  <span className="text-xs text-muted-foreground">Active totale</span>
-                </div>
-                <div className="text-2xl font-semibold tracking-tight">
-                  {company.mf_active_circulante && company.mf_active_imobilizate 
-                    ? `${(company.mf_active_circulante + company.mf_active_imobilizate).toLocaleString('ro-RO')} RON`
-                    : 'N/A'}
-                </div>
-              </div>
-            </div>
-
-            {/* Financial Details Table */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h3 className="text-sm font-semibold mb-4">Detalii financiare</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <tbody className="divide-y divide-border">
-                    {company.mf_venituri_totale && (
-                      <tr>
-                        <td className="py-3 text-muted-foreground">Venituri totale</td>
-                        <td className="py-3 text-right font-medium">{company.mf_venituri_totale.toLocaleString('ro-RO')} RON</td>
-                      </tr>
-                    )}
-                    {company.mf_cheltuieli_totale && (
-                      <tr>
-                        <td className="py-3 text-muted-foreground">Cheltuieli totale</td>
-                        <td className="py-3 text-right font-medium">{company.mf_cheltuieli_totale.toLocaleString('ro-RO')} RON</td>
-                      </tr>
-                    )}
-                    {company.mf_capitaluri_proprii && (
-                      <tr>
-                        <td className="py-3 text-muted-foreground">Capitaluri proprii</td>
-                        <td className="py-3 text-right font-medium">{company.mf_capitaluri_proprii.toLocaleString('ro-RO')} RON</td>
-                      </tr>
-                    )}
-                    {company.mf_datorii && (
-                      <tr>
-                        <td className="py-3 text-muted-foreground">Datorii</td>
-                        <td className="py-3 text-right font-medium">{company.mf_datorii.toLocaleString('ro-RO')} RON</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Juridic Tab */}
-        {activeTab === 'juridic' && (
+          {/* General Info */}
           <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="text-sm font-semibold mb-4">Informații juridice</h3>
-            <dl className="space-y-4">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              Informații generale
+            </h3>
+            <dl className="space-y-3">
+              {company.forma_juridica && (
+                <div>
+                  <dt className="text-xs text-muted-foreground mb-1">Formă juridică</dt>
+                  <dd className="text-sm">{company.anaf_forma_juridica || company.forma_juridica}</dd>
+                </div>
+              )}
+
+              {company.anaf_cod_caen && (
+                <div>
+                  <dt className="text-xs text-muted-foreground mb-1">Cod CAEN</dt>
+                  <dd className="text-sm">
+                    <span className="font-mono font-medium">{company.anaf_cod_caen}</span>
+                    {company.caen_denumire && (
+                      <span className="ml-2 text-muted-foreground">- {company.caen_denumire}</span>
+                    )}
+                  </dd>
+                </div>
+              )}
+
+              {company.caen_sectiune && (
+                <div>
+                  <dt className="text-xs text-muted-foreground mb-1">Secțiune CAEN</dt>
+                  <dd className="text-sm">
+                    <span className="px-2 py-0.5 bg-blue-500/10 text-blue-700 rounded text-xs">
+                      {company.caen_sectiune}: {company.caen_sectiune_denumire}
+                    </span>
+                  </dd>
+                </div>
+              )}
+
+              {company.anaf_stare && (
+                <div>
+                  <dt className="text-xs text-muted-foreground mb-1">Stare ANAF</dt>
+                  <dd className="text-sm">{company.anaf_stare}</dd>
+                </div>
+              )}
+
+              {company.anaf_data_inregistrare && (
+                <div>
+                  <dt className="text-xs text-muted-foreground mb-1">Data înregistrare</dt>
+                  <dd className="text-sm">{company.anaf_data_inregistrare}</dd>
+                </div>
+              )}
+
               {company.anaf_organ_fiscal && (
                 <div>
                   <dt className="text-xs text-muted-foreground mb-1">Organ fiscal</dt>
                   <dd className="text-sm">{company.anaf_organ_fiscal}</dd>
                 </div>
               )}
-              {company.anaf_data_inregistrare && (
-                <div>
-                  <dt className="text-xs text-muted-foreground mb-1">Data înregistrare ANAF</dt>
-                  <dd className="text-sm">{company.anaf_data_inregistrare}</dd>
-                </div>
-              )}
-              {company.anaf_forma_organizare && (
-                <div>
-                  <dt className="text-xs text-muted-foreground mb-1">Formă de organizare</dt>
-                  <dd className="text-sm">{company.anaf_forma_organizare}</dd>
-                </div>
-              )}
-              {company.anaf_forma_proprietate && (
-                <div>
-                  <dt className="text-xs text-muted-foreground mb-1">Formă de proprietate</dt>
-                  <dd className="text-sm">{company.anaf_forma_proprietate}</dd>
-                </div>
-              )}
             </dl>
+          </div>
+        </div>
+
+        {/* Financial Details */}
+        {(company.mf_venituri_totale || company.mf_cheltuieli_totale || company.mf_capitaluri_proprii || company.mf_datorii) && (
+          <div className="bg-card border border-border rounded-xl p-6">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Detalii financiare ({company.mf_an_bilant || 'Ultimul an'})
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              {company.mf_venituri_totale && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">Venituri totale</span>
+                  <span className="text-sm font-medium">{company.mf_venituri_totale.toLocaleString('ro-RO')} RON</span>
+                </div>
+              )}
+              {company.mf_cheltuieli_totale && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">Cheltuieli totale</span>
+                  <span className="text-sm font-medium">{company.mf_cheltuieli_totale.toLocaleString('ro-RO')} RON</span>
+                </div>
+              )}
+              {company.mf_capitaluri_proprii && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">Capitaluri proprii</span>
+                  <span className="text-sm font-medium">{company.mf_capitaluri_proprii.toLocaleString('ro-RO')} RON</span>
+                </div>
+              )}
+              {company.mf_datorii && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">Datorii</span>
+                  <span className="text-sm font-medium">{company.mf_datorii.toLocaleString('ro-RO')} RON</span>
+                </div>
+              )}
+              {company.mf_active_circulante && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">Active circulante</span>
+                  <span className="text-sm font-medium">{company.mf_active_circulante.toLocaleString('ro-RO')} RON</span>
+                </div>
+              )}
+              {company.mf_active_imobilizate && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">Active imobilizate</span>
+                  <span className="text-sm font-medium">{company.mf_active_imobilizate.toLocaleString('ro-RO')} RON</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* Premium CTA */}
-        <div className="mt-8 bg-gradient-to-r from-primary/10 to-accent border border-primary/20 rounded-xl p-6 text-center">
+        <div className="bg-gradient-to-r from-primary/10 to-accent border border-primary/20 rounded-xl p-6 text-center">
           <Lock className="w-8 h-8 mx-auto mb-3 text-primary" />
           <h3 className="text-lg font-semibold mb-2">Deblochează informații premium</h3>
           <p className="text-sm text-muted-foreground mb-4">
